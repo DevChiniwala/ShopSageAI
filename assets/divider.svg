@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 4" fill="none">
+  <style>
+    @keyframes shimmer{0%{stop-color:#a855f7;stop-opacity:0}25%{stop-color:#a855f7;stop-opacity:1}50%{stop-color:#6366f1;stop-opacity:1}75%{stop-color:#2dd4bf;stop-opacity:1}100%{stop-color:#2dd4bf;stop-opacity:0}}
+    @keyframes dotPulse{0%,100%{r:2;opacity:0.5}50%{r:3.5;opacity:1}}
+    .shimmer1{animation:shimmer 4s ease-in-out infinite}
+    .shimmer2{animation:shimmer 4s ease-in-out 1s infinite}
+    .shimmer3{animation:shimmer 4s ease-in-out 2s infinite}
+    .dot-pulse{animation:dotPulse 2.5s ease-in-out infinite}
+  </style>
+  <defs>
+    <linearGradient id="divGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#a855f7;stop-opacity:0" class="shimmer1"/>
+      <stop offset="20%" style="stop-color:#a855f7" class="shimmer1"/>
+      <stop offset="50%" style="stop-color:#6366f1" class="shimmer2"/>
+      <stop offset="80%" style="stop-color:#2dd4bf" class="shimmer3"/>
+      <stop offset="100%" style="stop-color:#2dd4bf;stop-opacity:0" class="shimmer3"/>
+    </linearGradient>
+  </defs>
+  <line x1="0" y1="2" x2="800" y2="2" stroke="url(#divGrad)" stroke-width="1.5"/>
+  <circle cx="400" cy="2" fill="#6366f1" class="dot-pulse">
+    <animate attributeName="r" values="2;3.5;2" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+</svg>

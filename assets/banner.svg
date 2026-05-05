@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" fill="none">
+  <style>
+    @keyframes float1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    @keyframes float2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+    @keyframes float3 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    @keyframes pulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
+    @keyframes glow-pulse { 0%,100%{opacity:0.15} 50%{opacity:0.35} }
+    @keyframes sparkle { 0%,100%{opacity:0;transform:scale(0.5)} 50%{opacity:1;transform:scale(1)} }
+    @keyframes dash-flow { to{stroke-dashoffset:-20} }
+    @keyframes orbit { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes shimmer { 0%{stop-color:#a855f7} 33%{stop-color:#6366f1} 66%{stop-color:#2dd4bf} 100%{stop-color:#a855f7} }
+    @keyframes fadeSlide { 0%{opacity:0;transform:translateX(-5px)} 100%{opacity:1;transform:translateX(0)} }
+    @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+    .float1{animation:float1 4s ease-in-out infinite}
+    .float2{animation:float2 5s ease-in-out infinite}
+    .float3{animation:float3 3.5s ease-in-out infinite}
+    .pulse{animation:pulse 3s ease-in-out infinite}
+    .glow-pulse{animation:glow-pulse 4s ease-in-out infinite}
+    .sparkle1{animation:sparkle 2.5s ease-in-out infinite}
+    .sparkle2{animation:sparkle 3s ease-in-out 0.8s infinite}
+    .sparkle3{animation:sparkle 2s ease-in-out 1.5s infinite}
+    .sparkle4{animation:sparkle 3.5s ease-in-out 0.3s infinite}
+    .flow-line{animation:dash-flow 1s linear infinite}
+    .shimmer-stop{animation:shimmer 6s ease-in-out infinite}
+    .cursor-blink{animation:blink 1s step-end infinite}
+  </style>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a1a"/>
+      <stop offset="40%" style="stop-color:#1a103d"/>
+      <stop offset="100%" style="stop-color:#0d1b2a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" class="shimmer-stop" style="stop-color:#a855f7"/>
+      <stop offset="50%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#2dd4bf"/>
+    </linearGradient>
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a855f7"/>
+      <stop offset="100%" style="stop-color:#2dd4bf"/>
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#c084fc"/>
+      <stop offset="50%" style="stop-color:#818cf8"/>
+      <stop offset="100%" style="stop-color:#5eead4"/>
+    </linearGradient>
+    <radialGradient id="orb1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#a855f7;stop-opacity:0.2"/>
+      <stop offset="100%" style="stop-color:#a855f7;stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="orb2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#2dd4bf;stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#2dd4bf;stop-opacity:0"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="bigGlow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="320" rx="16" fill="url(#bg)"/>
+
+  <!-- Animated accent bottom line -->
+  <rect x="0" y="316" width="1200" height="4" fill="url(#accent)" rx="2"/>
+
+  <!-- Animated background orbs -->
+  <circle cx="150" cy="80" r="140" fill="url(#orb1)" class="glow-pulse"/>
+  <circle cx="1050" cy="240" r="160" fill="url(#orb2)" class="glow-pulse" style="animation-delay:2s"/>
+  <circle cx="600" cy="160" r="200" fill="url(#orb1)" class="glow-pulse" style="animation-delay:1s;opacity:0.08"/>
+
+  <!-- Animated grid dots -->
+  <g opacity="0.12">
+    <circle cx="40" cy="30" r="1.2" fill="#a855f7" class="pulse"/><circle cx="70" cy="30" r="1.2" fill="#a855f7" class="pulse" style="animation-delay:0.2s"/>
+    <circle cx="100" cy="30" r="1.2" fill="#a855f7" class="pulse" style="animation-delay:0.4s"/><circle cx="130" cy="30" r="1.2" fill="#a855f7" class="pulse" style="animation-delay:0.6s"/>
+    <circle cx="40" cy="55" r="1.2" fill="#a855f7" class="pulse" style="animation-delay:0.3s"/><circle cx="70" cy="55" r="1.2" fill="#a855f7" class="pulse" style="animation-delay:0.5s"/>
+    <circle cx="100" cy="55" r="1.2" fill="#a855f7" class="pulse" style="animation-delay:0.7s"/><circle cx="130" cy="55" r="1.2" fill="#a855f7" class="pulse" style="animation-delay:0.9s"/>
+    <circle cx="40" cy="80" r="1.2" fill="#a855f7" class="pulse" style="animation-delay:0.1s"/><circle cx="70" cy="80" r="1.2" fill="#a855f7" class="pulse" style="animation-delay:0.8s"/>
+    <circle cx="1070" cy="230" r="1.2" fill="#2dd4bf" class="pulse" style="animation-delay:0.4s"/><circle cx="1100" cy="230" r="1.2" fill="#2dd4bf" class="pulse" style="animation-delay:0.6s"/>
+    <circle cx="1130" cy="230" r="1.2" fill="#2dd4bf" class="pulse" style="animation-delay:0.8s"/><circle cx="1160" cy="230" r="1.2" fill="#2dd4bf" class="pulse"/>
+    <circle cx="1070" cy="255" r="1.2" fill="#2dd4bf" class="pulse" style="animation-delay:0.5s"/><circle cx="1100" cy="255" r="1.2" fill="#2dd4bf" class="pulse" style="animation-delay:0.3s"/>
+    <circle cx="1130" cy="255" r="1.2" fill="#2dd4bf" class="pulse" style="animation-delay:0.1s"/><circle cx="1160" cy="255" r="1.2" fill="#2dd4bf" class="pulse" style="animation-delay:0.7s"/>
+    <circle cx="1070" cy="280" r="1.2" fill="#2dd4bf" class="pulse" style="animation-delay:0.2s"/><circle cx="1100" cy="280" r="1.2" fill="#2dd4bf" class="pulse" style="animation-delay:0.9s"/>
+  </g>
+
+  <!-- Floating sparkles -->
+  <g class="sparkle1" filter="url(#glow)">
+    <path d="M180 200 L183 193 L190 190 L183 187 L180 180 L177 187 L170 190 L177 193Z" fill="#a855f7"/>
+  </g>
+  <g class="sparkle2" filter="url(#glow)">
+    <path d="M1020 70 L1022 65 L1027 63 L1022 61 L1020 56 L1018 61 L1013 63 L1018 65Z" fill="#2dd4bf"/>
+  </g>
+  <g class="sparkle3" filter="url(#glow)">
+    <path d="M300 270 L302 266 L306 264 L302 262 L300 258 L298 262 L294 264 L298 266Z" fill="#6366f1"/>
+  </g>
+  <g class="sparkle4" filter="url(#glow)">
+    <path d="M950 180 L951.5 176 L955 174.5 L951.5 173 L950 169 L948.5 173 L945 174.5 L948.5 176Z" fill="#f472b6"/>
+  </g>
+
+  <!-- Main icon group - floating -->
+  <g class="float1">
+    <!-- Shopping bag -->
+    <g transform="translate(340, 78)" filter="url(#glow)">
+      <path d="M60 42 L60 22 C60 9.85 69.85 0 82 0 C94.15 0 104 9.85 104 22 L104 42" 
+            stroke="url(#iconGrad)" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <rect x="40" y="42" width="84" height="84" rx="14" fill="none" stroke="url(#iconGrad)" stroke-width="4.5"/>
+      <!-- Inner glow circle -->
+      <circle cx="82" cy="78" r="12" fill="#a855f7" opacity="0.15" class="pulse"/>
+      <circle cx="82" cy="78" r="6" fill="url(#iconGrad)" opacity="0.7"/>
+    </g>
+
+    <!-- Orbiting AI sparkles -->
+    <g transform="translate(448, 90)" style="transform-origin:448px 90px" class="sparkle1">
+      <path d="M0 -12 L3.5 -3.5 L12 0 L3.5 3.5 L0 12 L-3.5 3.5 L-12 0 L-3.5 -3.5Z" fill="#2dd4bf" filter="url(#glow)"/>
+    </g>
+    <g transform="translate(462, 118)" class="sparkle3">
+      <path d="M0 -7 L2 -2 L7 0 L2 2 L0 7 L-2 2 L-7 0 L-2 -2Z" fill="#a855f7" filter="url(#glow)"/>
+    </g>
+  </g>
+
+  <!-- Title -->
+  <g class="float3">
+    <text x="500" y="122" font-family="'Segoe UI', Arial, sans-serif" font-size="58" font-weight="800" fill="white" filter="url(#glow)">ShopSage</text>
+    <text x="828" y="122" font-family="'Segoe UI', Arial, sans-serif" font-size="58" font-weight="800" fill="url(#textGrad)" filter="url(#glow)">AI</text>
+  </g>
+
+  <!-- Tagline with blinking cursor -->
+  <text x="500" y="162" font-family="'Segoe UI', Arial, sans-serif" font-size="20" fill="#94a3b8" letter-spacing="0.5">
+    Your Intelligent Shopping Companion
+  </text>
+  <rect x="772" y="147" width="2" height="18" fill="#94a3b8" class="cursor-blink"/>
+
+  <!-- Animated tech pills -->
+  <g transform="translate(500, 188)">
+    <g class="float2" style="animation-delay:0s">
+      <rect x="0" y="0" width="75" height="30" rx="15" fill="#a855f7" opacity="0.12" stroke="#a855f7" stroke-width="1" stroke-opacity="0.4"/>
+      <text x="37.5" y="19" font-family="'Segoe UI', Arial, sans-serif" font-size="11" font-weight="600" fill="#c084fc" text-anchor="middle">RAG</text>
+    </g>
+    <g class="float2" style="animation-delay:0.3s">
+      <rect x="87" y="0" width="75" height="30" rx="15" fill="#6366f1" opacity="0.12" stroke="#6366f1" stroke-width="1" stroke-opacity="0.4"/>
+      <text x="124.5" y="19" font-family="'Segoe UI', Arial, sans-serif" font-size="11" font-weight="600" fill="#818cf8" text-anchor="middle">LLMs</text>
+    </g>
+    <g class="float2" style="animation-delay:0.6s">
+      <rect x="174" y="0" width="120" height="30" rx="15" fill="#2dd4bf" opacity="0.10" stroke="#2dd4bf" stroke-width="1" stroke-opacity="0.4"/>
+      <text x="234" y="19" font-family="'Segoe UI', Arial, sans-serif" font-size="11" font-weight="600" fill="#5eead4" text-anchor="middle">Semantic Router</text>
+    </g>
+    <g class="float2" style="animation-delay:0.9s">
+      <rect x="306" y="0" width="85" height="30" rx="15" fill="#f472b6" opacity="0.10" stroke="#f472b6" stroke-width="1" stroke-opacity="0.4"/>
+      <text x="348.5" y="19" font-family="'Segoe UI', Arial, sans-serif" font-size="11" font-weight="600" fill="#f9a8d4" text-anchor="middle">FastAPI</text>
+    </g>
+    <g class="float2" style="animation-delay:1.2s">
+      <rect x="403" y="0" width="95" height="30" rx="15" fill="#fbbf24" opacity="0.10" stroke="#fbbf24" stroke-width="1" stroke-opacity="0.4"/>
+      <text x="450.5" y="19" font-family="'Segoe UI', Arial, sans-serif" font-size="11" font-weight="600" fill="#fcd34d" text-anchor="middle">LangGraph</text>
+    </g>
+  </g>
+
+  <!-- Animated status badge -->
+  <g transform="translate(500, 240)">
+    <rect x="0" y="0" width="55" height="24" rx="5" fill="#1e1b4b"/>
+    <text x="27.5" y="16" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">v1.0.0</text>
+    <rect x="60" y="0" width="95" height="24" rx="5" fill="#7c3aed" opacity="0.7"/>
+    <circle cx="72" cy="12" r="3" fill="#4ade80" class="pulse"/>
+    <text x="113" y="16" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">Production</text>
+  </g>
+</svg>

@@ -1,0 +1,217 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" fill="none">
+  <style>
+    @keyframes flowDot1{0%{offset-distance:0%}100%{offset-distance:100%}}
+    @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
+    @keyframes nodePulse{0%,100%{stroke-opacity:0.6}50%{stroke-opacity:1}}
+    @keyframes glowPulse{0%,100%{opacity:0.08}50%{opacity:0.2}}
+    @keyframes dashFlow{to{stroke-dashoffset:-16}}
+    @keyframes fadeIn{0%{opacity:0}100%{opacity:1}}
+    @keyframes ripple{0%{r:0;opacity:0.5}100%{r:30;opacity:0}}
+    .node-pulse{animation:nodePulse 3s ease-in-out infinite}
+    .glow-bg{animation:glowPulse 4s ease-in-out infinite}
+    .dash-anim{animation:dashFlow 0.8s linear infinite}
+    .pulse{animation:pulse 2s ease-in-out infinite}
+    .ripple{animation:ripple 2.5s ease-out infinite}
+
+    /* Flowing dots on paths */
+    .flow-dot-down1{offset-path:path('M500 110 L500 146');animation:flowDot1 1.5s linear infinite}
+    .flow-dot-down2{offset-path:path('M500 201 L500 237');animation:flowDot1 1.5s linear infinite;animation-delay:0.3s}
+    .flow-dot-left{offset-path:path('M420 292 L420 314 L230 314 L230 346');animation:flowDot1 2s linear infinite}
+    .flow-dot-right{offset-path:path('M580 292 L580 314 L770 314 L770 346');animation:flowDot1 2s linear infinite;animation-delay:0.5s}
+    .flow-dot-tool1{offset-path:path('M720 411 L720 438 L640 438 L640 461');animation:flowDot1 1.5s linear infinite;animation-delay:0.2s}
+    .flow-dot-tool2{offset-path:path('M810 411 L810 438 L880 438 L880 461');animation:flowDot1 1.5s linear infinite;animation-delay:0.8s}
+    .flow-dot-resp1{offset-path:path('M230 411 L230 505 L390 505');animation:flowDot1 2.5s linear infinite;animation-delay:0.4s}
+    .flow-dot-resp2{offset-path:path('M540 486 L510 500');animation:flowDot1 1.5s linear infinite;animation-delay:0.6s}
+  </style>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a1a"/>
+      <stop offset="100%" style="stop-color:#12102e"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a855f7"/><stop offset="100%" style="stop-color:#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2dd4bf"/><stop offset="100%" style="stop-color:#14b8a6"/>
+    </linearGradient>
+    <linearGradient id="indigo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/><stop offset="100%" style="stop-color:#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="pink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f472b6"/><stop offset="100%" style="stop-color:#ec4899"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24"/><stop offset="100%" style="stop-color:#f59e0b"/>
+    </linearGradient>
+    <radialGradient id="nodeGlow1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#a855f7;stop-opacity:0.15"/><stop offset="100%" style="stop-color:#a855f7;stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="nodeGlow2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.15"/><stop offset="100%" style="stop-color:#6366f1;stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="nodeGlow3" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#2dd4bf;stop-opacity:0.15"/><stop offset="100%" style="stop-color:#2dd4bf;stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="nodeGlow4" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#f472b6;stop-opacity:0.12"/><stop offset="100%" style="stop-color:#f472b6;stop-opacity:0"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1000" height="560" rx="16" fill="url(#bg)"/>
+
+  <!-- Background glow blobs -->
+  <circle cx="500" cy="170" r="200" fill="url(#nodeGlow2)" class="glow-bg"/>
+  <circle cx="230" cy="380" r="120" fill="url(#nodeGlow3)" class="glow-bg" style="animation-delay:1s"/>
+  <circle cx="770" cy="380" r="130" fill="url(#nodeGlow4)" class="glow-bg" style="animation-delay:2s"/>
+
+  <!-- Title -->
+  <text x="500" y="38" font-family="'Segoe UI', Arial, sans-serif" font-size="16" font-weight="700" fill="#a855f7" text-anchor="middle" letter-spacing="4" opacity="0.9">SYSTEM ARCHITECTURE</text>
+  <line x1="380" y1="48" x2="620" y2="48" stroke="#a855f7" stroke-width="1" opacity="0.2"/>
+
+  <!-- ====== NODE 1: User Input ====== -->
+  <circle cx="500" cy="85" r="40" fill="url(#nodeGlow1)" class="glow-bg"/>
+  <g filter="url(#shadow)">
+    <rect x="390" y="60" width="220" height="50" rx="25" fill="#1e1b4b" stroke="#a855f7" stroke-width="1.5" class="node-pulse"/>
+    <g transform="translate(418, 74)">
+      <path d="M0 10C0 4.5 4.5 0 10 0h6c5.5 0 10 4.5 10 10v2c0 5.5-4.5 10-10 10h-3l-6 5v-5C2.5 22 0 19 0 14z" fill="#a855f7" opacity="0.7" transform="scale(0.75)"/>
+    </g>
+    <text x="453" y="91" font-family="'Segoe UI', Arial, sans-serif" font-size="16" fill="white" font-weight="600">User Input</text>
+  </g>
+  <circle cx="500" cy="85" r="0" fill="#a855f7" class="ripple" opacity="0"/>
+
+  <!-- Animated connection line 1 -->
+  <line x1="500" y1="110" x2="500" y2="146" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="4,4" class="dash-anim"/>
+  <circle r="3" fill="#a855f7" class="flow-dot-down1" filter="url(#glow)"/>
+
+  <!-- ====== NODE 2: FastAPI ====== -->
+  <circle cx="500" cy="173" r="50" fill="url(#nodeGlow1)" class="glow-bg" style="animation-delay:0.5s"/>
+  <g filter="url(#shadow)">
+    <rect x="350" y="146" width="300" height="55" rx="12" fill="#13102b" stroke="url(#purple)" stroke-width="1.8" class="node-pulse" style="animation-delay:0.5s"/>
+    <g transform="translate(380, 160)">
+      <path d="M12 0L5 14h5l-2 14 9-16h-5z" fill="#a855f7" transform="scale(0.85)"/>
+    </g>
+    <text x="418" y="179" font-family="'Segoe UI', Arial, sans-serif" font-size="15" font-weight="600" fill="white">FastAPI Server</text>
+    <rect x="555" y="161" width="75" height="24" rx="12" fill="#a855f7" opacity="0.15"/>
+    <text x="592" y="178" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="#c084fc" text-anchor="middle">/chat</text>
+  </g>
+
+  <!-- Animated connection line 2 -->
+  <line x1="500" y1="201" x2="500" y2="237" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,4" class="dash-anim"/>
+  <circle r="3" fill="#6366f1" class="flow-dot-down2" filter="url(#glow)"/>
+
+  <!-- ====== NODE 3: Semantic Router ====== -->
+  <circle cx="500" cy="264" r="55" fill="url(#nodeGlow2)" class="glow-bg" style="animation-delay:1s"/>
+  <g filter="url(#shadow)">
+    <rect x="330" y="237" width="340" height="55" rx="12" fill="#0e1029" stroke="url(#indigo)" stroke-width="1.8" class="node-pulse" style="animation-delay:1s"/>
+    <g transform="translate(368, 251)">
+      <circle cx="12" cy="12" r="10" stroke="#6366f1" stroke-width="2" fill="none"/>
+      <path d="M12 4l3 7-3 1.5L9 11z" fill="#818cf8"/>
+      <path d="M12 20l-3-7 3-1.5 3 1.5z" fill="#6366f1" opacity="0.5"/>
+      <circle cx="12" cy="12" r="1.5" fill="white"/>
+    </g>
+    <text x="415" y="270" font-family="'Segoe UI', Arial, sans-serif" font-size="15" font-weight="600" fill="white">Semantic Router</text>
+    <rect x="560" y="252" width="90" height="24" rx="12" fill="#6366f1" opacity="0.15"/>
+    <text x="605" y="269" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="#818cf8" text-anchor="middle">Embeddings</text>
+  </g>
+
+  <!-- Animated branching paths -->
+  <!-- Left: chitchat -->
+  <path d="M420 292 L420 314 L230 314 L230 346" stroke="#2dd4bf" stroke-width="1.5" fill="none" stroke-dasharray="4,4" class="dash-anim"/>
+  <circle r="3" fill="#2dd4bf" class="flow-dot-left" filter="url(#glow)"/>
+  <rect x="280" y="296" width="65" height="20" rx="10" fill="#0f2922" stroke="#2dd4bf" stroke-width="0.8" opacity="0.8"/>
+  <text x="312" y="310" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="#5eead4" text-anchor="middle" font-style="italic">chitchat</text>
+
+  <!-- Right: shopping -->
+  <path d="M580 292 L580 314 L770 314 L770 346" stroke="#f472b6" stroke-width="1.5" fill="none" stroke-dasharray="4,4" class="dash-anim"/>
+  <circle r="3" fill="#f472b6" class="flow-dot-right" filter="url(#glow)"/>
+  <rect x="630" y="296" width="75" height="20" rx="10" fill="#1c0f2e" stroke="#f472b6" stroke-width="0.8" opacity="0.8"/>
+  <text x="667" y="310" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="#f9a8d4" text-anchor="middle" font-style="italic">shopping</text>
+
+  <!-- ====== NODE 4L: Chitchat Chain ====== -->
+  <circle cx="230" cy="378" r="50" fill="url(#nodeGlow3)" class="glow-bg" style="animation-delay:1.5s"/>
+  <g filter="url(#shadow)">
+    <rect x="100" y="346" width="260" height="65" rx="12" fill="#0b1f1a" stroke="url(#teal)" stroke-width="1.8" class="node-pulse" style="animation-delay:1.5s"/>
+    <g transform="translate(130, 360)">
+      <rect x="0" y="0" width="18" height="13" rx="3" fill="none" stroke="#2dd4bf" stroke-width="1.8"/>
+      <path d="M3 13l-2 5 4.5-3.5" fill="#2dd4bf" opacity="0.5"/>
+      <line x1="4" y1="4.5" x2="14" y2="4.5" stroke="#2dd4bf" stroke-width="1.2" opacity="0.5"/>
+      <line x1="4" y1="8" x2="11" y2="8" stroke="#2dd4bf" stroke-width="1.2" opacity="0.35"/>
+    </g>
+    <text x="163" y="376" font-family="'Segoe UI', Arial, sans-serif" font-size="14" font-weight="600" fill="white">Chitchat Chain</text>
+    <text x="130" y="398" font-family="'Segoe UI', Arial, sans-serif" font-size="11" fill="#5eead4" opacity="0.8">Gemini 1.5 Flash + Memory</text>
+  </g>
+
+  <!-- ====== NODE 4R: Shopping Agent ====== -->
+  <circle cx="770" cy="378" r="55" fill="url(#nodeGlow4)" class="glow-bg" style="animation-delay:2s"/>
+  <g filter="url(#shadow)">
+    <rect x="630" y="346" width="280" height="65" rx="12" fill="#1a0c24" stroke="url(#pink)" stroke-width="1.8" class="node-pulse" style="animation-delay:2s"/>
+    <g transform="translate(660, 360)">
+      <path d="M2 2h3l2 12h11l3-8H8" fill="none" stroke="#f472b6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="9" cy="17" r="1.8" fill="#f472b6"/><circle cx="15" cy="17" r="1.8" fill="#f472b6"/>
+    </g>
+    <text x="695" y="376" font-family="'Segoe UI', Arial, sans-serif" font-size="14" font-weight="600" fill="white">Shopping Agent</text>
+    <text x="660" y="398" font-family="'Segoe UI', Arial, sans-serif" font-size="11" fill="#f9a8d4" opacity="0.8">LangGraph ReAct Agent</text>
+  </g>
+
+  <!-- Animated tool connections -->
+  <path d="M720 411 L720 438 L640 438 L640 461" stroke="#fbbf24" stroke-width="1.5" fill="none" stroke-dasharray="4,4" class="dash-anim"/>
+  <circle r="3" fill="#fbbf24" class="flow-dot-tool1" filter="url(#glow)"/>
+  <path d="M810 411 L810 438 L880 438 L880 461" stroke="#fbbf24" stroke-width="1.5" fill="none" stroke-dasharray="4,4" class="dash-anim"/>
+  <circle r="3" fill="#fbbf24" class="flow-dot-tool2" filter="url(#glow)"/>
+
+  <!-- ====== NODE 5L: Product Search ====== -->
+  <g filter="url(#shadow)">
+    <rect x="535" y="461" width="200" height="50" rx="10" fill="#151005" stroke="url(#amber)" stroke-width="1.5" class="node-pulse" style="animation-delay:2.5s"/>
+    <g transform="translate(557, 473)">
+      <circle cx="9" cy="9" r="6.5" stroke="#fbbf24" stroke-width="1.8" fill="none"/>
+      <line x1="14" y1="14" x2="20" y2="20" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round"/>
+    </g>
+    <text x="585" y="492" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="600" fill="white">Product Search</text>
+    <rect x="690" y="476" width="35" height="18" rx="9" fill="#fbbf24" opacity="0.12"/>
+    <text x="707" y="489" font-family="'Segoe UI', Arial, sans-serif" font-size="9" fill="#fcd34d" text-anchor="middle">SQLite</text>
+  </g>
+
+  <!-- ====== NODE 5R: Policy Search ====== -->
+  <g filter="url(#shadow)">
+    <rect x="775" y="461" width="190" height="50" rx="10" fill="#151005" stroke="url(#amber)" stroke-width="1.5" class="node-pulse" style="animation-delay:3s"/>
+    <g transform="translate(797, 473)">
+      <rect x="1" y="0" width="13" height="16" rx="2" fill="none" stroke="#fbbf24" stroke-width="1.8"/>
+      <line x1="5" y1="4.5" x2="12" y2="4.5" stroke="#fbbf24" stroke-width="1.2" opacity="0.5"/>
+      <line x1="5" y1="8" x2="12" y2="8" stroke="#fbbf24" stroke-width="1.2" opacity="0.5"/>
+      <line x1="5" y1="11.5" x2="9" y2="11.5" stroke="#fbbf24" stroke-width="1.2" opacity="0.5"/>
+    </g>
+    <text x="822" y="492" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="600" fill="white">Policy Search</text>
+    <rect x="925" y="476" width="30" height="18" rx="9" fill="#fbbf24" opacity="0.12"/>
+    <text x="940" y="489" font-family="'Segoe UI', Arial, sans-serif" font-size="9" fill="#fcd34d" text-anchor="middle">FAISS</text>
+  </g>
+
+  <!-- Animated response path -->
+  <path d="M230 411 L230 505 L390 505" stroke="#2dd4bf" stroke-width="1.5" fill="none" stroke-dasharray="4,4" class="dash-anim"/>
+  <circle r="3" fill="#2dd4bf" class="flow-dot-resp1" filter="url(#glow)"/>
+
+  <path d="M540 486 L510 500" stroke="#fbbf24" stroke-width="1.5" fill="none" stroke-dasharray="4,4" class="dash-anim"/>
+  <circle r="3" fill="#fbbf24" class="flow-dot-resp2" filter="url(#glow)"/>
+
+  <!-- ====== Response Node ====== -->
+  <g filter="url(#shadow)">
+    <rect x="390" y="488" width="120" height="36" rx="18" fill="#1e1b4b" stroke="#a855f7" stroke-width="1.5" class="node-pulse" style="animation-delay:3.5s"/>
+    <g transform="translate(405, 498)">
+      <path d="M6 0L7.5 4.5 12 6 7.5 7.5 6 12 4.5 7.5 0 6 4.5 4.5z" fill="#c084fc" transform="scale(0.65)"/>
+    </g>
+    <text x="427" y="511" font-family="'Segoe UI', Arial, sans-serif" font-size="13" fill="white" font-weight="500">Response</text>
+  </g>
+
+  <!-- Legend -->
+  <g transform="translate(30, 500)" opacity="0.5">
+    <circle r="3" cx="5" cy="8" fill="#a855f7"/><text x="14" y="12" font-family="'Segoe UI', Arial, sans-serif" font-size="9" fill="#94a3b8">Data Flow</text>
+    <line x1="70" y1="8" x2="95" y2="8" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="3,3"/>
+    <text x="100" y="12" font-family="'Segoe UI', Arial, sans-serif" font-size="9" fill="#94a3b8">Connection</text>
+  </g>
+</svg>

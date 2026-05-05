@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 210" fill="none">
+  <style>
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+    @keyframes borderGlow{0%,100%{stroke-opacity:0.5}50%{stroke-opacity:1}}
+    @keyframes iconPulse{0%,100%{opacity:0.7}50%{opacity:1}}
+    @keyframes shimmer{0%{opacity:0.03}50%{opacity:0.08}100%{opacity:0.03}}
+    .card-float{animation:float 4s ease-in-out infinite}
+    .border-glow{animation:borderGlow 3s ease-in-out infinite}
+    .icon-pulse{animation:iconPulse 2.5s ease-in-out infinite}
+    .bg-shimmer{animation:shimmer 5s ease-in-out infinite}
+  </style>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a1a"/><stop offset="100%" style="stop-color:#12102e"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6"/><stop offset="100%" style="stop-color:#2563eb"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2dd4bf"/><stop offset="100%" style="stop-color:#14b8a6"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a855f7"/><stop offset="100%" style="stop-color:#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="indigo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/><stop offset="100%" style="stop-color:#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24"/><stop offset="100%" style="stop-color:#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4ade80"/><stop offset="100%" style="stop-color:#22c55e"/>
+    </linearGradient>
+    <linearGradient id="pink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f472b6"/><stop offset="100%" style="stop-color:#ec4899"/>
+    </linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="shadow"><feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000" flood-opacity="0.3"/></filter>
+  </defs>
+
+  <rect width="1000" height="210" rx="16" fill="url(#bg)"/>
+
+  <!-- Card 1: Python -->
+  <g class="card-float" style="animation-delay:0s" filter="url(#shadow)">
+    <rect x="30" y="42" width="120" height="126" rx="14" fill="#111827" stroke="#3b82f6" stroke-width="1.3" class="border-glow"/>
+    <rect x="30" y="42" width="120" height="126" rx="14" fill="#3b82f6" class="bg-shimmer"/>
+    <g transform="translate(68, 60)" filter="url(#glow)" class="icon-pulse">
+      <path d="M22 0C10 0 10 5.5 10 5.5V11h12v2H7S0 12 0 22s6 10 6 10h4v-5s0-6 6-6h10s6 0 6-6V5.5S32 0 22 0zm-6 3.5a2 2 0 110 4 2 2 0 010-4z" fill="url(#blue)" transform="scale(0.85)"/>
+    </g>
+    <text x="90" y="128" font-family="'Segoe UI', Arial, sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle">Python</text>
+    <text x="90" y="146" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">3.10+</text>
+  </g>
+
+  <!-- Card 2: FastAPI -->
+  <g class="card-float" style="animation-delay:0.25s" filter="url(#shadow)">
+    <rect x="170" y="42" width="120" height="126" rx="14" fill="#111827" stroke="url(#teal)" stroke-width="1.3" class="border-glow" style="animation-delay:0.25s"/>
+    <rect x="170" y="42" width="120" height="126" rx="14" fill="#14b8a6" class="bg-shimmer" style="animation-delay:1s"/>
+    <g transform="translate(213, 62)" filter="url(#glow)" class="icon-pulse" style="animation-delay:0.25s">
+      <path d="M18 0L6 22h8L10 40 26 16h-8L22 0z" fill="url(#teal)"/>
+    </g>
+    <text x="230" y="128" font-family="'Segoe UI', Arial, sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle">FastAPI</text>
+    <text x="230" y="146" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Async Web</text>
+  </g>
+
+  <!-- Card 3: Gemini -->
+  <g class="card-float" style="animation-delay:0.5s" filter="url(#shadow)">
+    <rect x="310" y="42" width="120" height="126" rx="14" fill="#111827" stroke="url(#purple)" stroke-width="1.3" class="border-glow" style="animation-delay:0.5s"/>
+    <rect x="310" y="42" width="120" height="126" rx="14" fill="#7c3aed" class="bg-shimmer" style="animation-delay:2s"/>
+    <g transform="translate(352, 58)" filter="url(#glow)" class="icon-pulse" style="animation-delay:0.5s">
+      <path d="M18 0L21.5 12.5 34 16 21.5 19.5 18 32 14.5 19.5 2 16 14.5 12.5z" fill="url(#purple)"/>
+      <circle cx="30" cy="6" r="3" fill="#c084fc" opacity="0.7"/>
+      <circle cx="6" cy="8" r="2" fill="#c084fc" opacity="0.5"/>
+    </g>
+    <text x="370" y="128" font-family="'Segoe UI', Arial, sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle">Gemini</text>
+    <text x="370" y="146" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">1.5 Flash</text>
+  </g>
+
+  <!-- Card 4: LangChain -->
+  <g class="card-float" style="animation-delay:0.75s" filter="url(#shadow)">
+    <rect x="450" y="42" width="120" height="126" rx="14" fill="#111827" stroke="url(#indigo)" stroke-width="1.3" class="border-glow" style="animation-delay:0.75s"/>
+    <rect x="450" y="42" width="120" height="126" rx="14" fill="#4f46e5" class="bg-shimmer" style="animation-delay:3s"/>
+    <g transform="translate(487, 62)" filter="url(#glow)" class="icon-pulse" style="animation-delay:0.75s">
+      <path d="M6 12a6 6 0 018.5-5.5l2-2A10 10 0 000 12a10 10 0 008 9.8l1-3A6 6 0 016 12z" fill="url(#indigo)"/>
+      <path d="M26 12a6 6 0 01-8.5 5.5l-2 2A10 10 0 0032 12a10 10 0 00-8-9.8l-1 3A6 6 0 0126 12z" fill="#818cf8"/>
+      <circle cx="16" cy="12" r="3" fill="#a5b4fc"/>
+    </g>
+    <text x="510" y="128" font-family="'Segoe UI', Arial, sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle">LangChain</text>
+    <text x="510" y="146" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">+ LangGraph</text>
+  </g>
+
+  <!-- Card 5: FAISS -->
+  <g class="card-float" style="animation-delay:1s" filter="url(#shadow)">
+    <rect x="590" y="42" width="120" height="126" rx="14" fill="#111827" stroke="url(#amber)" stroke-width="1.3" class="border-glow" style="animation-delay:1s"/>
+    <rect x="590" y="42" width="120" height="126" rx="14" fill="#f59e0b" class="bg-shimmer" style="animation-delay:4s"/>
+    <g transform="translate(630, 62)" filter="url(#glow)" class="icon-pulse" style="animation-delay:1s">
+      <circle cx="14" cy="14" r="10" stroke="url(#amber)" stroke-width="3" fill="none"/>
+      <line x1="22" y1="22" x2="32" y2="32" stroke="url(#amber)" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="14" cy="14" r="4" fill="#fbbf24" opacity="0.25"/>
+    </g>
+    <text x="650" y="128" font-family="'Segoe UI', Arial, sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle">FAISS</text>
+    <text x="650" y="146" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Vector Store</text>
+  </g>
+
+  <!-- Card 6: SQLite -->
+  <g class="card-float" style="animation-delay:1.25s" filter="url(#shadow)">
+    <rect x="730" y="42" width="120" height="126" rx="14" fill="#111827" stroke="url(#green)" stroke-width="1.3" class="border-glow" style="animation-delay:1.25s"/>
+    <rect x="730" y="42" width="120" height="126" rx="14" fill="#22c55e" class="bg-shimmer" style="animation-delay:5s"/>
+    <g transform="translate(770, 60)" filter="url(#glow)" class="icon-pulse" style="animation-delay:1.25s">
+      <ellipse cx="18" cy="6" rx="14" ry="6" fill="none" stroke="url(#green)" stroke-width="2.5"/>
+      <path d="M4 6v22c0 3.3 6.3 6 14 6s14-2.7 14-6V6" fill="none" stroke="url(#green)" stroke-width="2.5"/>
+      <ellipse cx="18" cy="17" rx="14" ry="5" fill="none" stroke="#4ade80" stroke-width="1" opacity="0.35"/>
+    </g>
+    <text x="790" y="128" font-family="'Segoe UI', Arial, sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle">SQLite</text>
+    <text x="790" y="146" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Products DB</text>
+  </g>
+
+  <!-- Card 7: Semantic Router -->
+  <g class="card-float" style="animation-delay:1.5s" filter="url(#shadow)">
+    <rect x="870" y="42" width="120" height="126" rx="14" fill="#111827" stroke="url(#pink)" stroke-width="1.3" class="border-glow" style="animation-delay:1.5s"/>
+    <rect x="870" y="42" width="120" height="126" rx="14" fill="#ec4899" class="bg-shimmer" style="animation-delay:6s"/>
+    <g transform="translate(912, 60)" filter="url(#glow)" class="icon-pulse" style="animation-delay:1.5s">
+      <circle cx="16" cy="16" r="14" stroke="url(#pink)" stroke-width="2.5" fill="none"/>
+      <path d="M16 4L20 14 16 16 12 14z" fill="#f472b6"/>
+      <path d="M16 28L12 18 16 16 20 18z" fill="#f9a8d4" opacity="0.6"/>
+      <circle cx="16" cy="16" r="2.5" fill="white"/>
+    </g>
+    <text x="930" y="128" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="700" fill="white" text-anchor="middle">Semantic</text>
+    <text x="930" y="146" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Router</text>
+  </g>
+</svg>
