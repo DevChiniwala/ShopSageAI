@@ -236,7 +236,7 @@ ShopSageAI/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourusername/ShopSageAI.git
+git clone https://github.com/DevChiniwala/ShopSageAI.git
 cd ShopSageAI
 
 # 2. Create virtual environment
