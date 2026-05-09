@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ShopSage AI - Your intelligent shopping companion powered by AI">
+    <title>ShopSage AI — Smart Shopping Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="chat-header" id="chat-header">
+            <div class="header-left">
+                <div class="logo-icon">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                        <path d="M14 4L14 2C14 0.895 14.895 0 16 0H18C19.105 0 20 0.895 20 2V4" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round"/>
+                        <rect x="8" y="4" width="18" height="18" rx="4" stroke="url(#logoGrad)" stroke-width="2" fill="none"/>
+                        <circle cx="17" cy="13" r="2" fill="url(#logoGrad)" opacity="0.7"/>
+                        <path d="M24 2L26 0M26 4L28 2" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0" y1="0" x2="28" y2="28">
+                                <stop stop-color="#a855f7"/><stop offset="1" stop-color="#2dd4bf"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="header-text">
+                    <h1>ShopSage <span class="ai-accent">AI</span></h1>
+                    <p class="header-subtitle">Your Intelligent Shopping Companion</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="status-dot"></div>
+                <span class="status-text">Online</span>
+            </div>
+        </header>
+
+        <!-- Chat Messages -->
+        <main class="chat-messages" id="chat-messages">
+            <!-- Welcome message injected by JS -->
+        </main>
+
+        <!-- Input Area -->
+        <footer class="chat-input-area" id="chat-input-area">
+            <div class="input-wrapper">
+                <input
+                    type="text"
+                    id="message-input"
+                    class="message-input"
+                    placeholder="Ask about products, policies, or just say hello..."
+                    autocomplete="off"
+                    maxlength="500"
+                >
+                <button id="send-btn" class="send-btn" title="Send message">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M18 10L2 2L4 10L2 18L18 10Z" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+            <p class="input-hint">Press Enter to send · Powered by Gemini 1.5 Flash</p>
+        </footer>
+    </div>
+
+    <script src="/static/js/chat.js"></script>
+</body>
+</html>
