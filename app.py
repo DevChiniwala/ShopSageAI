@@ -64,7 +64,7 @@ class ChatResponse(BaseModel):
 @app.get("/")
 async def home(request: Request):
     """Serve the chat interface."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 
 @app.post("/chat", response_model=ChatResponse)
