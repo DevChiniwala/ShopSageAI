@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain.schema import Document
+from langchain_core.documents import Document
 from shopsage.config import (
     DB_PATH, POLICY_PATH, FAISS_INDEX_PATH,
     EMBEDDING_MODEL, GOOGLE_API_KEY,
