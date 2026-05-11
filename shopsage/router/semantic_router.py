@@ -1,35 +1,21 @@
 """
 Semantic Router - Classifies user queries using embedding-based cosine similarity.
 
-Uses the semantic-router library with Google Generative AI embeddings
-to route queries to either 'shopping' or 'chitchat' handlers.
+Uses Google Generative AI embeddings to compute similarity between
+user queries and pre-defined route utterances, routing to either
+'shopping' or 'chitchat' handlers.
 """
+import numpy as np
+from google import genai
+from shopsage.config import GOOGLE_API_KEY
 
-import os
-from typing import List
-from semantic_router import Route, RouteLayer
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from shopsage.config import EMBEDDING_MODEL, GOOGLE_API_KEY
-
-
-class GoogleGenAIEncoder:
-    """Wrapper to make GoogleGenerativeAIEmbeddings compatible with semantic-router."""
-
-    def __init__(self, model_name: str = EMBEDDING_MODEL):
-        self.client = GoogleGenerativeAIEmbeddings(
-            model=model_name, google_api_key=GOOGLE_API_KEY
-        )
-
-    def __call__(self, texts: List[str]) -> List[List[float]]:
-        """Embed a list of texts and return their vector representations."""
-        return self.client.embed_documents(texts)
-
+# Initialize the Google GenAI client
+_client = genai.Client(api_key=GOOGLE_API_KEY)
 
 # ─── Route Definitions ─────────────────────────────────────────────────
 
-shopping_route = Route(
-    name="shopping",
-    utterances=[
+ROUTES = {
+    "shopping": [
         "Show me red shirts",
         "What jackets do you have?",
         "I'm looking for blue dresses",
@@ -61,11 +47,7 @@ shopping_route = Route(
         "Do you ship internationally?",
         "What payment methods do you accept?",
     ],
-)
-
-chitchat_route = Route(
-    name="chitchat",
-    utterances=[
+    "chitchat": [
         "Hello!",
         "How are you?",
         "What's your name?",
@@ -87,30 +69,63 @@ chitchat_route = Route(
         "Nice talking to you",
         "What's up?",
     ],
-)
+}
 
-# ─── Router Initialization ─────────────────────────────────────────────
+# ─── Embedding Cache ───────────────────────────────────────────────────
 
-_encoder = None
-_route_layer = None
+_route_embeddings: dict[str, np.ndarray] | None = None
 
 
-def _get_route_layer() -> RouteLayer:
-    """Lazy-initialize the route layer to avoid startup delays."""
-    global _encoder, _route_layer
+def _embed_texts(texts: list[str]) -> np.ndarray:
+    """Embed a list of texts using Google's embedding model."""
+    result = _client.models.embed_content(
+        model="models/gemini-embedding-001",
+        contents=texts,
+    )
+    return np.array([e.values for e in result.embeddings])
 
-    if _route_layer is None:
-        _encoder = GoogleGenAIEncoder()
-        _route_layer = RouteLayer(
-            encoder=_encoder, routes=[shopping_route, chitchat_route]
-        )
 
-    return _route_layer
+def _embed_query(text: str) -> np.ndarray:
+    """Embed a single query text."""
+    result = _client.models.embed_content(
+        model="models/gemini-embedding-001",
+        contents=text,
+    )
+    return np.array(result.embeddings[0].values)
+
+
+def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Compute cosine similarity between vector a and matrix b."""
+    a_norm = a / (np.linalg.norm(a) + 1e-10)
+    b_norm = b / (np.linalg.norm(b, axis=1, keepdims=True) + 1e-10)
+    return np.dot(b_norm, a_norm)
+
+
+def _get_route_embeddings() -> dict[str, np.ndarray]:
+    """Lazy-initialize route embeddings (computed once, cached in memory)."""
+    global _route_embeddings
+
+    if _route_embeddings is None:
+        print("[Router] Computing route embeddings (one-time)...")
+        _route_embeddings = {}
+        for route_name, utterances in ROUTES.items():
+            _route_embeddings[route_name] = _embed_texts(utterances)
+        print("[Router] Route embeddings cached ✓")
+
+    return _route_embeddings
+
+
+# ─── Public API ────────────────────────────────────────────────────────
+
+SCORE_THRESHOLD = 0.75
 
 
 def classify_query(text: str) -> str:
     """
     Classify a user query as either 'shopping' or 'chitchat'.
+
+    Uses cosine similarity between the query embedding and
+    pre-computed route utterance embeddings.
 
     Args:
         text: The user's input query.
@@ -118,17 +133,29 @@ def classify_query(text: str) -> str:
     Returns:
         'shopping' if the query is product/policy related,
         'chitchat' if it's general conversation,
-        'chitchat' as fallback if no route matches.
+        'chitchat' as fallback if no route matches confidently.
     """
     try:
-        route_layer = _get_route_layer()
-        result = route_layer(text)
+        route_embs = _get_route_embeddings()
+        query_emb = _embed_query(text)
 
-        if result and result.name:
-            return result.name
+        best_route = "chitchat"
+        best_score = -1.0
 
-        # Default fallback
-        return "chitchat"
+        for route_name, emb_matrix in route_embs.items():
+            similarities = _cosine_similarity(query_emb, emb_matrix)
+            max_score = float(np.max(similarities))
+
+            if max_score > best_score:
+                best_score = max_score
+                best_route = route_name
+
+        print(f"[Router] Query: '{text[:50]}...' → {best_route} (score: {best_score:.3f})")
+
+        if best_score < SCORE_THRESHOLD:
+            return "chitchat"
+
+        return best_route
 
     except Exception as e:
         print(f"[Router] Classification error: {e}")
