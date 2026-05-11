@@ -6,9 +6,9 @@ for natural multi-turn interactions.
 """
 
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.chains import ConversationChain
-from langchain.memory import ConversationBufferMemory
-from langchain.prompts import PromptTemplate
+from langchain_classic.chains import ConversationChain
+from langchain_classic.memory import ConversationBufferMemory
+from langchain_core.prompts import PromptTemplate
 from shopsage.config import LLM_MODEL, GOOGLE_API_KEY
 
 CHITCHAT_PROMPT = PromptTemplate(
@@ -61,7 +61,6 @@ def get_chitchat_response(user_input: str, session_id: str) -> str:
             model=LLM_MODEL,
             google_api_key=GOOGLE_API_KEY,
             temperature=0.7,
-            convert_system_message_to_human=True,
         )
 
         memory = _get_memory(session_id)
