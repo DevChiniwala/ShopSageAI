@@ -76,7 +76,6 @@ def _get_agent():
             model=LLM_MODEL,
             google_api_key=GOOGLE_API_KEY,
             temperature=0.3,
-            convert_system_message_to_human=True
         )
 
         _agent = create_react_agent(
