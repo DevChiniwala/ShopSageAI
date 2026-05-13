@@ -23,6 +23,10 @@ CHUNK_SIZE = 500
 CHUNK_OVERLAP = 100
 TOP_K_RESULTS = 3
 
+# ─── User Memory Configuration ────────────────────────────────────────
+ENABLE_USER_MEMORY = True
+MAX_PROFILE_NOTES_LENGTH = 2000
+
 # ─── Server Configuration ─────────────────────────────────────────────
 HOST = "0.0.0.0"
 PORT = 8000
