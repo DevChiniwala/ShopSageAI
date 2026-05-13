@@ -110,7 +110,7 @@ def _get_route_embeddings() -> dict[str, np.ndarray]:
         _route_embeddings = {}
         for route_name, utterances in ROUTES.items():
             _route_embeddings[route_name] = _embed_texts(utterances)
-        print("[Router] Route embeddings cached ✓")
+        print("[Router] Route embeddings ready ✓")
 
     return _route_embeddings
 
