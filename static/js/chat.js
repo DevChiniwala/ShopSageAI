@@ -1,180 +1,207 @@
 /**
- * ShopSage AI — Chat Interaction Logic
+ * ShopSage AI — Chat Controller
+ * Manages welcome → chat state transitions, message flow, and API communication
  */
+'use strict';
 
-const messagesContainer = document.getElementById('chat-messages');
-const messageInput = document.getElementById('message-input');
-const sendBtn = document.getElementById('send-btn');
+// ─── DOM Cache ──────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const welcomeScreen = $('welcome-screen');
+const chatScreen    = $('chat-screen');
+const welcomeInput  = $('welcome-input');
+const welcomeSend   = $('welcome-send');
+const messageInput  = $('message-input');
+const sendBtn       = $('send-btn');
+const messagesEl    = $('chat-messages');
+const backBtn       = $('back-btn');
+const clearBtn      = $('clear-chat');
+const chips         = document.querySelectorAll('.chip');
 
-// Session ID for conversation continuity
-let sessionId = crypto.randomUUID ? crypto.randomUUID() : generateUUID();
+// ─── Session State ──────────────────────────────────────────────
+let sessionId = _uuid();
+let isSending = false;
 
-function generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-        const r = Math.random() * 16 | 0;
-        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-    });
+function _uuid() {
+    return crypto.randomUUID?.() ??
+        'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+            const r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
 }
 
-// ─── Initialize ────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-    addBotMessage(
-        `Hey there! 👋 I'm **ShopSage AI**, your intelligent shopping companion.\n\n` +
-        `Here's what I can help you with:\n` +
-        `🔍 **Search products** — "Show me red shirts"\n` +
-        `📊 **Compare & recommend** — "Best jacket under ₹5000"\n` +
-        `📋 **Policy questions** — "What's your return policy?"\n` +
-        `💬 **Just chat** — "How are you?"\n\n` +
-        `What are you looking for today?`,
-        'chitchat'
-    );
-    messageInput.focus();
+function _time() {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// ─── Screen Transitions ─────────────────────────────────────────
+function switchToChat(initialMessage) {
+    welcomeScreen.classList.add('fade-out');
+    setTimeout(() => {
+        welcomeScreen.classList.add('hidden');
+        chatScreen.classList.remove('hidden');
+        chatScreen.classList.add('visible');
+        messageInput.focus();
+        if (initialMessage) sendMessage(initialMessage);
+    }, 500);
+}
+
+function switchToWelcome() {
+    chatScreen.classList.remove('visible');
+    chatScreen.classList.add('hidden');
+    welcomeScreen.classList.remove('hidden', 'fade-out');
+    welcomeInput.value = '';
+    welcomeInput.focus();
+    messagesEl.innerHTML = '';
+    sessionId = _uuid();
+}
+
+// ─── Event Binding ──────────────────────────────────────────────
+welcomeSend.addEventListener('click', () => {
+    const text = welcomeInput.value.trim();
+    if (text) switchToChat(text);
 });
 
-// ─── Event Listeners ───────────────────────────────────────────
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keydown', (e) => {
+welcomeInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        const text = welcomeInput.value.trim();
+        if (text) switchToChat(text);
+    }
+});
+
+chips.forEach(chip => {
+    chip.addEventListener('click', () => switchToChat(chip.dataset.query));
+});
+
+sendBtn.addEventListener('click', () => {
+    const text = messageInput.value.trim();
+    if (text && !isSending) sendMessage(text);
+});
+
+messageInput.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        sendMessage();
+        const text = messageInput.value.trim();
+        if (text && !isSending) sendMessage(text);
     }
 });
 
-// ─── Send Message ──────────────────────────────────────────────
-async function sendMessage() {
-    const text = messageInput.value.trim();
-    if (!text) return;
+backBtn.addEventListener('click', switchToWelcome);
+clearBtn.addEventListener('click', () => {
+    messagesEl.innerHTML = '';
+    sessionId = _uuid();
+});
 
-    // Add user message
-    addUserMessage(text);
+// ─── API Communication ──────────────────────────────────────────
+async function sendMessage(text) {
+    if (isSending) return;
+    isSending = true;
+
+    addUserMsg(text);
     messageInput.value = '';
     sendBtn.disabled = true;
-
-    // Show typing indicator
-    const typingEl = showTypingIndicator();
+    const typing = showTyping();
 
     try {
-        const response = await fetch('/chat', {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 60000);
+
+        const res = await fetch('/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                message: text,
-                session_id: sessionId
-            })
+            body: JSON.stringify({ message: text, session_id: sessionId }),
+            signal: controller.signal
         });
 
-        const data = await response.json();
+        clearTimeout(timeout);
+        const data = await res.json();
+        if (data.session_id) sessionId = data.session_id;
 
-        // Update session ID if returned
-        if (data.session_id) {
-            sessionId = data.session_id;
-        }
-
-        // Remove typing, add response
-        removeTypingIndicator(typingEl);
-        addBotMessage(data.response, data.route);
-
-    } catch (error) {
-        console.error('Chat error:', error);
-        removeTypingIndicator(typingEl);
-        addBotMessage(
-            "Sorry, I'm having trouble connecting. Please check if the server is running and try again.",
-            'error'
-        );
-    }
-
-    sendBtn.disabled = false;
-    messageInput.focus();
-}
-
-// ─── Add User Message ──────────────────────────────────────────
-function addUserMessage(text) {
-    const messageEl = document.createElement('div');
-    messageEl.className = 'message user';
-    messageEl.innerHTML = `
-        <div class="message-avatar">You</div>
-        <div class="message-content">${escapeHtml(text)}</div>
-    `;
-    messagesContainer.appendChild(messageEl);
-    scrollToBottom();
-}
-
-// ─── Add Bot Message ───────────────────────────────────────────
-function addBotMessage(text, route = '') {
-    const messageEl = document.createElement('div');
-    messageEl.className = 'message bot';
-
-    let badgeHtml = '';
-    if (route === 'shopping') {
-        badgeHtml = '<span class="route-badge shopping">🛒 Shopping</span>';
-    } else if (route === 'chitchat') {
-        badgeHtml = '<span class="route-badge chitchat">💬 Chat</span>';
-    }
-
-    messageEl.innerHTML = `
-        <div class="message-avatar">AI</div>
-        <div class="message-content">
-            ${badgeHtml}
-            <div>${formatMarkdown(text)}</div>
-        </div>
-    `;
-    messagesContainer.appendChild(messageEl);
-    scrollToBottom();
-}
-
-// ─── Typing Indicator ──────────────────────────────────────────
-function showTypingIndicator() {
-    const typingEl = document.createElement('div');
-    typingEl.className = 'message bot';
-    typingEl.id = 'typing-indicator';
-    typingEl.innerHTML = `
-        <div class="message-avatar">AI</div>
-        <div class="typing-indicator">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-        </div>
-    `;
-    messagesContainer.appendChild(typingEl);
-    scrollToBottom();
-    return typingEl;
-}
-
-function removeTypingIndicator(el) {
-    if (el && el.parentNode) {
-        el.parentNode.removeChild(el);
+        removeTyping(typing);
+        addBotMsg(data.response, data.route);
+    } catch (err) {
+        removeTyping(typing);
+        const msg = err.name === 'AbortError'
+            ? 'Request timed out. The server might be busy — please try again.'
+            : "Sorry, I couldn't connect to the server. Please check if it's running.";
+        addBotMsg(msg, 'error');
+    } finally {
+        isSending = false;
+        sendBtn.disabled = false;
+        messageInput.focus();
     }
 }
 
-// ─── Utilities ─────────────────────────────────────────────────
-function scrollToBottom() {
-    requestAnimationFrame(() => {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    });
+// ─── Message Rendering ──────────────────────────────────────────
+function addUserMsg(text) {
+    const el = document.createElement('div');
+    el.className = 'message user';
+    el.innerHTML = `
+        <div class="msg-avatar">You</div>
+        <div class="msg-bubble">
+            <div>${escapeHtml(text)}</div>
+            <div class="msg-meta">
+                <span>${_time()}</span>
+                <svg viewBox="0 0 16 16" fill="currentColor"><path d="M12.354 4.354a.5.5 0 00-.708-.708L5 10.293 2.354 7.646a.5.5 0 10-.708.708l3 3a.5.5 0 00.708 0l7-7z"/></svg>
+            </div>
+        </div>`;
+    messagesEl.appendChild(el);
+    scrollBottom();
 }
 
-function escapeHtml(text) {
+function addBotMsg(text, route) {
+    const el = document.createElement('div');
+    el.className = 'message bot';
+
+    const tags = {
+        shopping: '<div class="route-tag shopping">🛒 Shopping</div>',
+        chitchat: '<div class="route-tag chitchat">💬 Chat</div>'
+    };
+
+    el.innerHTML = `
+        <div class="msg-avatar"><div class="bot-orb"></div></div>
+        <div class="msg-bubble">
+            ${tags[route] || ''}
+            <div>${formatMd(text)}</div>
+            <div class="msg-meta"><span>${_time()}</span></div>
+        </div>`;
+    messagesEl.appendChild(el);
+    scrollBottom();
+}
+
+// ─── Typing Indicator ───────────────────────────────────────────
+function showTyping() {
+    const el = document.createElement('div');
+    el.className = 'message bot';
+    el.id = 'typing-indicator';
+    el.innerHTML = `
+        <div class="msg-avatar"><div class="bot-orb"></div></div>
+        <div class="typing-dots"><span></span><span></span><span></span></div>`;
+    messagesEl.appendChild(el);
+    scrollBottom();
+    return el;
+}
+
+function removeTyping(el) { el?.remove(); }
+
+// ─── Utilities ──────────────────────────────────────────────────
+function scrollBottom() {
+    requestAnimationFrame(() => { messagesEl.scrollTop = messagesEl.scrollHeight; });
+}
+
+function escapeHtml(str) {
     const div = document.createElement('div');
-    div.textContent = text;
+    div.textContent = str;
     return div.innerHTML;
 }
 
-function formatMarkdown(text) {
+function formatMd(text) {
     if (!text) return '';
-
     return text
-        // Bold: **text**
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        // Italic: *text*
-        .replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, '<em>$1</em>')
-        // Inline code: `code`
         .replace(/`(.*?)`/g, '<code>$1</code>')
-        // Headers: ### text
-        .replace(/^### (.*$)/gm, '<strong style="font-size:1.05em;display:block;margin-top:10px;">$1</strong>')
-        // Bullet points: - item
-        .replace(/^- (.*$)/gm, '• $1')
-        // Numbered lists: 1. item
-        .replace(/^(\d+)\. (.*$)/gm, '<span style="opacity:0.6">$1.</span> $2')
-        // Line breaks
+        .replace(/^### (.*$)/gm, '<strong style="font-size:1.05em;display:block;margin:10px 0 4px">$1</strong>')
+        .replace(/^## (.*$)/gm, '<strong style="font-size:1.1em;display:block;margin:12px 0 6px">$1</strong>')
+        .replace(/^- (.*$)/gm, '&nbsp;&nbsp;•&nbsp; $1')
+        .replace(/^(\d+)\. (.*$)/gm, '&nbsp;&nbsp;$1.&nbsp; $2')
         .replace(/\n/g, '<br>');
 }
