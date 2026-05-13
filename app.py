@@ -105,7 +105,7 @@ async def chat(request: ChatRequest):
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Handle uncaught exceptions gracefully."""
-    logger.error(f"Unhandled error: {exc}")
+    logger.error(f"Unhandled error: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
         content={
