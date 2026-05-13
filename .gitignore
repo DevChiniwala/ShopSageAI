@@ -1,27 +1,9 @@
-# Environment
-.env
-venv/
-.venv/
-
-# Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-dist/
-build/
-test_api.py
-
-# Data (generated)
+*.pyc
+.env
 data/products.db
 data/faiss_index/
-
-# IDE
+venv/
+*.egg-info/
 .vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
+do_commits.bat
