@@ -116,6 +116,27 @@ def init_database():
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, PRODUCTS)
 
+    # Create user_profiles table for persistent memory
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_profiles (
+            user_id            TEXT PRIMARY KEY,
+            name               TEXT,
+            budget_min         REAL,
+            budget_max         REAL,
+            preferred_brands   TEXT DEFAULT '[]',
+            preferred_colors   TEXT DEFAULT '[]',
+            preferred_materials TEXT DEFAULT '[]',
+            style_tags         TEXT DEFAULT '[]',
+            gender             TEXT,
+            sizes              TEXT DEFAULT '{}',
+            notes              TEXT DEFAULT '',
+            created_at         TEXT DEFAULT (datetime('now')),
+            updated_at         TEXT DEFAULT (datetime('now'))
+        )
+    """)
+
+    print("   ✅ Created user_profiles table for persistent memory")
+
     # Create indexes for faster search
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_product_name ON products(product_name COLLATE NOCASE)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_color ON products(color COLLATE NOCASE)")
