@@ -2,7 +2,7 @@
 ShopSage AI - FastAPI Application Entry Point.
 
 An AI-powered intelligent shopping assistant combining LLMs,
-RAG, Semantic Routing, and advanced product search.
+RAG, Semantic Routing, User Memory, and advanced product search.
 """
 
 import uuid
@@ -18,6 +18,8 @@ from typing import Optional
 from shopsage.router.semantic_router import classify_query
 from shopsage.chain.chitchat_chain import get_chitchat_response
 from shopsage.agent.shopping_agent import get_shopping_response
+from shopsage.memory.user_profile import ProfileStore
+from shopsage.config import DB_PATH
 
 # ─── Logging ───────────────────────────────────────────────────────────
 logging.basicConfig(level=logging.INFO)
@@ -26,8 +28,8 @@ logger = logging.getLogger("shopsage")
 # ─── FastAPI App ───────────────────────────────────────────────────────
 app = FastAPI(
     title="ShopSage AI",
-    description="AI-powered intelligent shopping assistant",
-    version="1.0.0",
+    description="AI-powered intelligent shopping assistant with user memory",
+    version="2.0.0",
 )
 
 # CORS
@@ -42,6 +44,9 @@ app.add_middleware(
 # Static files and templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+# User profile store
+_profile_store = ProfileStore(db_path=DB_PATH)
 
 
 # ─── Request / Response Models ─────────────────────────────────────────
@@ -74,6 +79,7 @@ async def chat(request: ChatRequest):
 
     The message is first classified by the Semantic Router,
     then routed to either the Chitchat Chain or Shopping Agent.
+    User profile is loaded for personalized responses.
     """
     message = request.message.strip()
     session_id = request.session_id or str(uuid.uuid4())
@@ -100,6 +106,34 @@ async def chat(request: ChatRequest):
     logger.info(f"[Session {session_id[:8]}] Response: {response[:80]}...")
 
     return ChatResponse(response=response, route=route, session_id=session_id)
+
+
+@app.get("/profile/{session_id}")
+async def get_user_profile(session_id: str):
+    """
+    Retrieve the user profile for a given session.
+
+    Returns the user's stored preferences including budget,
+    favourite brands, style tags, and sizes.
+    """
+    profile = _profile_store.get_profile(session_id)
+
+    if profile is None:
+        return {"exists": False, "profile": None}
+
+    return {
+        "exists": True,
+        "profile": {
+            "name": profile.name,
+            "budget_min": profile.budget_min,
+            "budget_max": profile.budget_max,
+            "preferred_brands": profile.preferred_brands,
+            "preferred_colors": profile.preferred_colors,
+            "style_tags": profile.style_tags,
+            "gender": profile.gender,
+            "sizes": profile.sizes,
+        },
+    }
 
 
 @app.exception_handler(Exception)
