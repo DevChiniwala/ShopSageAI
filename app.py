@@ -7,7 +7,7 @@ RAG, Semantic Routing, User Memory, and advanced product search.
 
 import uuid
 import logging
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +18,7 @@ from typing import Optional
 from shopsage.router.semantic_router import classify_query
 from shopsage.chain.chitchat_chain import get_chitchat_response
 from shopsage.agent.shopping_agent import get_shopping_response
+from shopsage.tool.visual_search import search_by_image
 from shopsage.memory.user_profile import ProfileStore
 from shopsage.config import DB_PATH
 
@@ -106,6 +107,85 @@ async def chat(request: ChatRequest):
     logger.info(f"[Session {session_id[:8]}] Response: {response[:80]}...")
 
     return ChatResponse(response=response, route=route, session_id=session_id)
+
+
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+
+
+@app.post("/chat-image")
+async def chat_with_image(
+    file: UploadFile = File(...),
+    message: str = Form(""),
+    session_id: str = Form(""),
+):
+    """
+    Process an image upload for visual product search.
+
+    The image is analyzed by Gemini Vision to extract product attributes,
+    then matched against the inventory database.
+
+    Args:
+        file: The uploaded product image (JPEG, PNG, WebP).
+        message: Optional text message accompanying the image.
+        session_id: Session identifier for continuity.
+    """
+    session_id = session_id or str(uuid.uuid4())
+
+    # Validate file type
+    content_type = file.content_type or "image/jpeg"
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "response": "Please upload a valid image (JPEG, PNG, or WebP).",
+                "route": "error",
+                "session_id": session_id,
+            },
+        )
+
+    # Read and validate size (max 10MB)
+    image_bytes = await file.read()
+    if len(image_bytes) > 10 * 1024 * 1024:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "response": "Image is too large. Please upload an image under 10MB.",
+                "route": "error",
+                "session_id": session_id,
+            },
+        )
+
+    logger.info(
+        f"[Session {session_id[:8]}] Visual search: "
+        f"{file.filename} ({len(image_bytes)} bytes)"
+    )
+
+    # Run visual search pipeline
+    result = search_by_image(image_bytes, content_type)
+
+    description = result["description"]
+    products = result["results"]
+
+    # Build response combining vision analysis + search results
+    if description:
+        user_context = f"Looking for: {message}" if message else ""
+        response_text = (
+            f"**I see:** {description}\n\n"
+            f"{user_context}\n\n"
+            f"**Here's what I found in our inventory:**\n\n{products}"
+        )
+    else:
+        response_text = (
+            "I couldn't analyze this image clearly. "
+            "Could you try uploading a clearer product photo?"
+        )
+
+    return {
+        "response": response_text,
+        "route": "visual_search",
+        "session_id": session_id,
+        "image_description": description,
+    }
 
 
 @app.get("/profile/{session_id}")
