@@ -46,6 +46,12 @@ ROUTES = {
         "What's your privacy policy?",
         "Do you ship internationally?",
         "What payment methods do you accept?",
+        # Visual search utterances
+        "Find products that look like this",
+        "I uploaded a photo of what I want",
+        "Search by image",
+        "Find something similar to this picture",
+        "What product is in this image?",
     ],
     "chitchat": [
         "Hello!",
