@@ -1,6 +1,7 @@
 /**
  * ShopSage AI — Chat Controller
- * Manages welcome → chat state transitions, message flow, and API communication
+ * Manages welcome → chat state transitions, message flow, API communication,
+ * and visual search via image upload.
  */
 'use strict';
 
@@ -15,11 +16,18 @@ const sendBtn       = $('send-btn');
 const messagesEl    = $('chat-messages');
 const backBtn       = $('back-btn');
 const clearBtn      = $('clear-chat');
-const chips         = document.querySelectorAll('.chip');
+const chips         = document.querySelectorAll('.chip[data-query]');
+const imageUpload   = $('image-upload');
+const previewBar    = $('image-preview-bar');
+const previewThumb  = $('image-preview-thumb');
+const previewName   = $('image-preview-name');
+const previewClear  = $('image-preview-clear');
+const visualChip    = $('visual-search-chip');
 
 // ─── Session State ──────────────────────────────────────────────
 let sessionId = _uuid();
 let isSending = false;
+let pendingImage = null;  // { file, dataUrl }
 
 function _uuid() {
     return crypto.randomUUID?.() ??
@@ -53,6 +61,7 @@ function switchToWelcome() {
     welcomeInput.focus();
     messagesEl.innerHTML = '';
     sessionId = _uuid();
+    clearPendingImage();
 }
 
 // ─── Event Binding ──────────────────────────────────────────────
@@ -73,15 +82,25 @@ chips.forEach(chip => {
 });
 
 sendBtn.addEventListener('click', () => {
-    const text = messageInput.value.trim();
-    if (text && !isSending) sendMessage(text);
+    if (isSending) return;
+    if (pendingImage) {
+        sendImageMessage();
+    } else {
+        const text = messageInput.value.trim();
+        if (text) sendMessage(text);
+    }
 });
 
 messageInput.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        const text = messageInput.value.trim();
-        if (text && !isSending) sendMessage(text);
+        if (isSending) return;
+        if (pendingImage) {
+            sendImageMessage();
+        } else {
+            const text = messageInput.value.trim();
+            if (text) sendMessage(text);
+        }
     }
 });
 
@@ -89,9 +108,106 @@ backBtn.addEventListener('click', switchToWelcome);
 clearBtn.addEventListener('click', () => {
     messagesEl.innerHTML = '';
     sessionId = _uuid();
+    clearPendingImage();
 });
 
-// ─── API Communication ──────────────────────────────────────────
+// ─── Image Upload Handling ──────────────────────────────────────
+visualChip?.addEventListener('click', () => {
+    // Switch to chat first, then trigger upload
+    switchToChat(null);
+    setTimeout(() => imageUpload?.click(), 600);
+});
+
+imageUpload?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type and size
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+        alert('Please upload a JPEG, PNG, or WebP image.');
+        imageUpload.value = '';
+        return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+        alert('Image is too large. Please upload an image under 10MB.');
+        imageUpload.value = '';
+        return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        pendingImage = { file, dataUrl: ev.target.result };
+        showImagePreview(file.name, ev.target.result);
+    };
+    reader.readAsDataURL(file);
+});
+
+function showImagePreview(name, dataUrl) {
+    if (!previewBar) return;
+    previewThumb.src = dataUrl;
+    previewName.textContent = name;
+    previewBar.classList.remove('hidden');
+    messageInput.placeholder = 'Add a message about this image (optional)...';
+}
+
+function clearPendingImage() {
+    pendingImage = null;
+    if (imageUpload) imageUpload.value = '';
+    if (previewBar) previewBar.classList.add('hidden');
+    messageInput.placeholder = 'Ask me anything about products...';
+}
+
+previewClear?.addEventListener('click', clearPendingImage);
+
+// ─── API: Send Image ────────────────────────────────────────────
+async function sendImageMessage() {
+    if (isSending || !pendingImage) return;
+    isSending = true;
+
+    const text = messageInput.value.trim();
+    addUserImageMsg(pendingImage.dataUrl, text);
+    messageInput.value = '';
+    sendBtn.disabled = true;
+    const typing = showTyping();
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 90000); // 90s for image processing
+
+        const formData = new FormData();
+        formData.append('file', pendingImage.file);
+        formData.append('message', text);
+        formData.append('session_id', sessionId);
+
+        const res = await fetch('/chat-image', {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal
+        });
+
+        clearTimeout(timeout);
+        const data = await res.json();
+        if (data.session_id) sessionId = data.session_id;
+
+        removeTyping(typing);
+        addBotMsg(data.response, data.route || 'visual_search');
+    } catch (err) {
+        removeTyping(typing);
+        const msg = err.name === 'AbortError'
+            ? 'Image analysis timed out. Please try with a smaller or clearer image.'
+            : "Sorry, I couldn't process the image. Please check if the server is running.";
+        addBotMsg(msg, 'error');
+    } finally {
+        isSending = false;
+        sendBtn.disabled = false;
+        clearPendingImage();
+        messageInput.focus();
+    }
+}
+
+// ─── API: Send Text ─────────────────────────────────────────────
 async function sendMessage(text) {
     if (isSending) return;
     isSending = true;
@@ -148,13 +264,32 @@ function addUserMsg(text) {
     scrollBottom();
 }
 
+function addUserImageMsg(dataUrl, text) {
+    const el = document.createElement('div');
+    el.className = 'message user';
+    const textHtml = text ? `<div style="margin-top:8px">${escapeHtml(text)}</div>` : '';
+    el.innerHTML = `
+        <div class="msg-avatar">You</div>
+        <div class="msg-bubble">
+            <img src="${dataUrl}" class="msg-image" alt="Uploaded product image">
+            ${textHtml}
+            <div class="msg-meta">
+                <span>${_time()}</span>
+                <svg viewBox="0 0 16 16" fill="currentColor"><path d="M12.354 4.354a.5.5 0 00-.708-.708L5 10.293 2.354 7.646a.5.5 0 10-.708.708l3 3a.5.5 0 00.708 0l7-7z"/></svg>
+            </div>
+        </div>`;
+    messagesEl.appendChild(el);
+    scrollBottom();
+}
+
 function addBotMsg(text, route) {
     const el = document.createElement('div');
     el.className = 'message bot';
 
     const tags = {
         shopping: '<div class="route-tag shopping">🛒 Shopping</div>',
-        chitchat: '<div class="route-tag chitchat">💬 Chat</div>'
+        chitchat: '<div class="route-tag chitchat">💬 Chat</div>',
+        visual_search: '<div class="route-tag visual">📸 Visual Search</div>'
     };
 
     el.innerHTML = `
