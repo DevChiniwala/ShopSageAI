@@ -27,6 +27,11 @@ TOP_K_RESULTS = 3
 ENABLE_USER_MEMORY = True
 MAX_PROFILE_NOTES_LENGTH = 2000
 
+# ─── Price Scraper Configuration ──────────────────────────────────────
+SCRAPER_TIMEOUT = int(os.getenv("SCRAPER_TIMEOUT", "8"))
+SCRAPER_CACHE_TTL = int(os.getenv("SCRAPER_CACHE_TTL", "600"))
+MAX_RESULTS_PER_STORE = int(os.getenv("MAX_RESULTS_PER_STORE", "3"))
+
 # ─── Server Configuration ─────────────────────────────────────────────
 HOST = "0.0.0.0"
 PORT = 8000
