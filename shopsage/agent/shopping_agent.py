@@ -13,6 +13,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from shopsage.tool.product_search import product_search, product_search_by_price
 from shopsage.tool.policy_search import policy_search
 from shopsage.tool.preference_tool import save_user_preference, get_profile_context
+from shopsage.tool.price_comparison import compare_prices
 from shopsage.config import LLM_MODEL, GOOGLE_API_KEY, ENABLE_USER_MEMORY
 
 logger = logging.getLogger("shopsage.agent")
@@ -71,6 +72,8 @@ When recommending products, use this structure:
 - For policy questions, use the policy search tool
 - Always personalize recommendations using the user context below
 - Use ₹ for currency
+- When users want to compare prices across stores, use the compare_prices tool
+- If the user asks 'where to buy', 'best deal', or 'cheapest', use compare_prices
 """
 
 MEMORY_CONTEXT_TEMPLATE = """
@@ -81,7 +84,10 @@ MEMORY_CONTEXT_TEMPLATE = """
 # ─── Agent Setup ───────────────────────────────────────────────────────
 
 _checkpointer = MemorySaver()
-_tools = [product_search, product_search_by_price, policy_search, save_user_preference]
+_tools = [
+    product_search, product_search_by_price, policy_search,
+    save_user_preference, compare_prices,
+]
 
 _llm = None
 _agent = None
