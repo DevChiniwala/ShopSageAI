@@ -292,11 +292,20 @@ function addBotMsg(text, route) {
         visual_search: '<div class="route-tag visual">📸 Visual Search</div>'
     };
 
+    // Try rendering price cards if text contains comparison data
+    let contentHtml = '';
+    if (text && text.includes('PRICE COMPARISON') && window.renderPriceCards) {
+        const cards = window.renderPriceCards(text);
+        contentHtml = cards || formatMd(text);
+    } else {
+        contentHtml = formatMd(text);
+    }
+
     el.innerHTML = `
         <div class="msg-avatar"><div class="bot-orb"></div></div>
         <div class="msg-bubble">
             ${tags[route] || ''}
-            <div>${formatMd(text)}</div>
+            <div>${contentHtml}</div>
             <div class="msg-meta"><span>${_time()}</span></div>
         </div>`;
     messagesEl.appendChild(el);
