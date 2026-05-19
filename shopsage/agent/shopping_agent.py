@@ -14,6 +14,7 @@ from shopsage.tool.product_search import product_search, product_search_by_price
 from shopsage.tool.policy_search import policy_search
 from shopsage.tool.preference_tool import save_user_preference, get_profile_context
 from shopsage.tool.price_comparison import compare_prices
+from shopsage.tool.review_analyzer import analyze_reviews
 from shopsage.config import LLM_MODEL, GOOGLE_API_KEY, ENABLE_USER_MEMORY
 
 logger = logging.getLogger("shopsage.agent")
@@ -74,6 +75,14 @@ When recommending products, use this structure:
 - Use ₹ for currency
 - When users want to compare prices across stores, use the compare_prices tool
 - If the user asks 'where to buy', 'best deal', or 'cheapest', use compare_prices
+- For review questions ('is it good?', 'pros and cons', 'reviews'), use analyze_reviews
+
+## Multilingual:
+- Always respond in the SAME LANGUAGE the user writes in
+- If the user writes in Hindi, respond in Hindi
+- If the user writes in Arabic, respond in Arabic
+- If the user writes in Spanish, respond in Spanish
+- Product data is in English, but translate your analysis and recommendations
 """
 
 MEMORY_CONTEXT_TEMPLATE = """
@@ -86,7 +95,7 @@ MEMORY_CONTEXT_TEMPLATE = """
 _checkpointer = MemorySaver()
 _tools = [
     product_search, product_search_by_price, policy_search,
-    save_user_preference, compare_prices,
+    save_user_preference, compare_prices, analyze_reviews,
 ]
 
 _llm = None
