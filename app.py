@@ -19,6 +19,7 @@ from shopsage.router.semantic_router import classify_query
 from shopsage.chain.chitchat_chain import get_chitchat_response
 from shopsage.agent.shopping_agent import get_shopping_response
 from shopsage.tool.visual_search import search_by_image
+from shopsage.tool.price_scraper import fetch_prices, results_to_dict
 from shopsage.memory.user_profile import ProfileStore
 from shopsage.config import DB_PATH
 
@@ -186,6 +187,29 @@ async def chat_with_image(
         "session_id": session_id,
         "image_description": description,
     }
+
+
+@app.get("/compare-prices")
+async def compare_prices_endpoint(q: str = ""):
+    """
+    Compare live prices for a product across Amazon, Flipkart, and Croma.
+
+    Args:
+        q: Product search query string.
+
+    Returns:
+        JSON with best deal, all results, and metadata.
+    """
+    if not q.strip():
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Please provide a product query using ?q=product+name"},
+        )
+
+    logger.info(f"[API] Price comparison: {q[:50]}")
+
+    results = await fetch_prices(q.strip())
+    return results_to_dict(q.strip(), results)
 
 
 @app.get("/profile/{session_id}")
