@@ -52,6 +52,21 @@ ROUTES = {
         "Search by image",
         "Find something similar to this picture",
         "What product is in this image?",
+        # Hindi shopping utterances
+        "मुझे लाल शर्ट दिखाओ",
+        "सबसे सस्ता जैकेट कौन सा है?",
+        "नाइकी के जूते दिखाओ",
+        "5000 रुपये के अंदर कुछ दिखाओ",
+        "यह प्रोडक्ट कितने का है?",
+        "रिटर्न पॉलिसी क्या है?",
+        # Arabic shopping utterances
+        "أريد حذاء نايك",
+        "أرني قمصان حمراء",
+        "ما هو سعر هذا المنتج؟",
+        # Spanish shopping utterances
+        "Quiero una camisa roja",
+        "Muéstrame zapatos Nike",
+        "Cuál es el producto más barato?",
     ],
     "chitchat": [
         "Hello!",
@@ -74,6 +89,19 @@ ROUTES = {
         "See you later",
         "Nice talking to you",
         "What's up?",
+        # Hindi chitchat
+        "नमस्ते",
+        "क्या हाल है?",
+        "तुम कौन हो?",
+        "शुक्रिया",
+        # Arabic chitchat
+        "مرحبا",
+        "كيف حالك؟",
+        "شكرا لك",
+        # Spanish chitchat
+        "Hola",
+        "Cómo estás?",
+        "Gracias",
     ],
 }
 
