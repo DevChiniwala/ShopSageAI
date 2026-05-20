@@ -18,6 +18,7 @@ from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 
 from shopsage.config import SCRAPER_TIMEOUT, SCRAPER_CACHE_TTL, MAX_RESULTS_PER_STORE
+from shopsage.monetise.affiliate import inject_affiliate_link
 
 logger = logging.getLogger("shopsage.scraper")
 
@@ -409,7 +410,8 @@ def format_comparison(query: str, results: list[StoreResult]) -> str:
     link_parts = []
     for r in valid:
         if r.url:
-            link_parts.append(f"{r.store}: {r.url}")
+            aff_url = inject_affiliate_link(r.url)
+            link_parts.append(f"{r.store}: {aff_url}")
     if link_parts:
         lines.append(f"\n🔗 Links:\n" + "\n".join(link_parts))
 
@@ -440,7 +442,9 @@ def results_to_dict(query: str, results: list[StoreResult]) -> dict:
     return {
         "query": query,
         "best_deal": best,
-        "results": [asdict(r) for r in results],
+        "results": [
+            {**asdict(r), "url": inject_affiliate_link(r.url)} for r in results
+        ],
         "result_count": len(valid),
         "stores_checked": 3,
     }
