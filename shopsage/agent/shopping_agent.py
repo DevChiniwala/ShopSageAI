@@ -15,6 +15,7 @@ from shopsage.tool.policy_search import policy_search
 from shopsage.tool.preference_tool import save_user_preference, get_profile_context
 from shopsage.tool.price_comparison import compare_prices
 from shopsage.tool.review_analyzer import analyze_reviews
+from shopsage.tool.deal_alert_tool import set_price_alert, list_price_alerts, remove_price_alert
 from shopsage.config import LLM_MODEL, GOOGLE_API_KEY, ENABLE_USER_MEMORY
 
 logger = logging.getLogger("shopsage.agent")
@@ -76,6 +77,10 @@ When recommending products, use this structure:
 - When users want to compare prices across stores, use the compare_prices tool
 - If the user asks 'where to buy', 'best deal', or 'cheapest', use compare_prices
 - For review questions ('is it good?', 'pros and cons', 'reviews'), use analyze_reviews
+- For price drop alerts ('alert me', 'notify me', 'watch price'), use set_price_alert
+- For listing alerts ('my alerts', 'my watches'), use list_price_alerts
+- For removing alerts ('remove alert', 'cancel watch'), use remove_price_alert
+- When using deal alert tools, always pass session_id from the conversation
 
 ## Multilingual:
 - Always respond in the SAME LANGUAGE the user writes in
@@ -96,6 +101,7 @@ _checkpointer = MemorySaver()
 _tools = [
     product_search, product_search_by_price, policy_search,
     save_user_preference, compare_prices, analyze_reviews,
+    set_price_alert, list_price_alerts, remove_price_alert,
 ]
 
 _llm = None
