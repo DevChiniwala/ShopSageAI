@@ -21,6 +21,7 @@ from shopsage.agent.shopping_agent import get_shopping_response
 from shopsage.tool.visual_search import search_by_image
 from shopsage.tool.price_scraper import fetch_prices, results_to_dict
 from shopsage.monetise.deal_alerts import DealAlertStore
+from shopsage.workers.price_checker import PriceCheckerWorker
 from shopsage.memory.user_profile import ProfileStore
 from shopsage.config import DB_PATH
 
@@ -50,6 +51,32 @@ templates = Jinja2Templates(directory="templates")
 
 # User profile store
 _profile_store = ProfileStore(db_path=DB_PATH)
+
+# Background price checker
+_price_checker = PriceCheckerWorker(db_path=DB_PATH)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Start background workers on app startup."""
+    _price_checker.start()
+    logger.info("[App] Background workers started")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Gracefully stop background workers."""
+    await _price_checker.stop()
+    logger.info("[App] Background workers stopped")
+
+
+@app.get("/worker/status")
+async def worker_status():
+    """Get the price checker worker status and stats."""
+    return {
+        "running": _price_checker.is_running,
+        "stats": _price_checker.stats,
+    }
 
 
 # ─── Request / Response Models ─────────────────────────────────────────
