@@ -20,6 +20,7 @@ from shopsage.chain.chitchat_chain import get_chitchat_response
 from shopsage.agent.shopping_agent import get_shopping_response
 from shopsage.tool.visual_search import search_by_image
 from shopsage.tool.price_scraper import fetch_prices, results_to_dict
+from shopsage.monetise.deal_alerts import DealAlertStore
 from shopsage.memory.user_profile import ProfileStore
 from shopsage.config import DB_PATH
 
@@ -238,6 +239,81 @@ async def get_user_profile(session_id: str):
             "sizes": profile.sizes,
         },
     }
+
+
+# ─── Deal Alert Endpoints ──────────────────────────────────────────────
+
+_deal_store = DealAlertStore(db_path=DB_PATH)
+
+
+class AlertRequest(BaseModel):
+    product_query: str
+    target_price: float
+    session_id: str
+
+
+@app.post("/alerts")
+async def create_alert(req: AlertRequest):
+    """
+    Create a new price drop alert.
+
+    The user will be notified when the product price drops
+    below the specified target.
+    """
+    if req.target_price <= 0:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Target price must be greater than 0."},
+        )
+
+    watch = _deal_store.create_watch(
+        user_id=req.session_id,
+        product_query=req.product_query,
+        target_price=req.target_price,
+    )
+    return {
+        "success": True,
+        "alert_id": watch.id,
+        "product": watch.product_query,
+        "target_price": watch.target_price,
+    }
+
+
+@app.get("/alerts/{session_id}")
+async def list_alerts(session_id: str):
+    """
+    List all active price alerts for a user session.
+    """
+    watches = _deal_store.get_user_watches(session_id, active_only=True)
+    return {
+        "count": len(watches),
+        "alerts": [
+            {
+                "id": w.id,
+                "product": w.product_query,
+                "target_price": w.target_price,
+                "current_price": w.current_price,
+                "lowest_price": w.lowest_price,
+                "triggered": w.triggered,
+                "created_at": w.created_at,
+            }
+            for w in watches
+        ],
+    }
+
+
+@app.delete("/alerts/{session_id}/{alert_id}")
+async def delete_alert(session_id: str, alert_id: int):
+    """
+    Deactivate a price alert.
+    """
+    success = _deal_store.deactivate_watch(alert_id, session_id)
+    if success:
+        return {"success": True, "message": f"Alert #{alert_id} removed."}
+    return JSONResponse(
+        status_code=404,
+        content={"error": f"Alert #{alert_id} not found."},
+    )
 
 
 @app.exception_handler(Exception)
