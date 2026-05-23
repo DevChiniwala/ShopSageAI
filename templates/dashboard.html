@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopSage AI - Dashboard</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar glass-panel">
+            <div class="sidebar-header">
+                <h2>ShopSage AI</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active"><a href="#">Overview</a></li>
+                    <li><a href="#">API Usage</a></li>
+                    <li><a href="#">Tenants</a></li>
+                    <li><a href="#">Feedback</a></li>
+                    <li><a href="#">Settings</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar glass-panel">
+                <h1>Dashboard Overview</h1>
+                <div class="user-profile">
+                    <span>Admin</span>
+                </div>
+            </header>
+
+            <div class="content-grid">
+                <!-- KPI Cards -->
+                <div class="kpi-card glass-panel">
+                    <h3>Active Tenants</h3>
+                    <p id="kpi-tenants">...</p>
+                </div>
+                <div class="kpi-card glass-panel">
+                    <h3>Total API Calls</h3>
+                    <p id="kpi-api-calls">...</p>
+                </div>
+                <div class="kpi-card glass-panel">
+                    <h3>Positive Feedback</h3>
+                    <p id="kpi-feedback">...</p>
+                </div>
+
+                <!-- Charts -->
+                <div class="chart-container glass-panel" style="grid-column: span 2;">
+                    <h3>API Usage Trend</h3>
+                    <canvas id="apiUsageChart"></canvas>
+                </div>
+
+                <!-- Recent Feedback -->
+                <div class="recent-feedback glass-panel" style="grid-column: span 3;">
+                    <h3>Recent Feedback</h3>
+                    <table class="feedback-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Session ID</th>
+                                <th>Rating</th>
+                                <th>Comment</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feedback-tbody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
