@@ -23,6 +23,8 @@ from shopsage.tool.price_scraper import fetch_prices, results_to_dict
 from shopsage.monetise.deal_alerts import DealAlertStore
 from shopsage.workers.price_checker import PriceCheckerWorker
 from shopsage.memory.user_profile import ProfileStore
+from shopsage.memory.feedback_store import FeedbackStore
+from shopsage.router.api_router import router as api_router
 from shopsage.config import DB_PATH
 
 # ─── Logging ───────────────────────────────────────────────────────────
@@ -54,6 +56,12 @@ _profile_store = ProfileStore(db_path=DB_PATH)
 
 # Background price checker
 _price_checker = PriceCheckerWorker(db_path=DB_PATH)
+
+# Feedback store
+_feedback_store = FeedbackStore(db_path=DB_PATH)
+
+# Include SaaS API Router
+app.include_router(api_router)
 
 
 @app.on_event("startup")
@@ -342,6 +350,46 @@ async def delete_alert(session_id: str, alert_id: int):
         content={"error": f"Alert #{alert_id} not found."},
     )
 
+# ─── Feedback & Dashboard Endpoints ────────────────────────────────────
+
+class FeedbackRequest(BaseModel):
+    session_id: str
+    message_id: str
+    rating: int
+    comment: Optional[str] = None
+
+@app.post("/feedback")
+async def log_feedback(req: FeedbackRequest):
+    """
+    Log user feedback (thumbs up/down) for an AI response.
+    """
+    _feedback_store.log_feedback(
+        session_id=req.session_id,
+        message_id=req.message_id,
+        rating=req.rating,
+        comment=req.comment
+    )
+    return {"success": True}
+
+@app.get("/dashboard")
+async def dashboard_page(request: Request):
+    """
+    Render the Admin SaaS Dashboard page.
+    """
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+@app.get("/api/v1/dashboard/stats")
+async def dashboard_stats():
+    """
+    Get aggregated stats for the dashboard.
+    Mocking tenant count for now.
+    """
+    feedback_stats = _feedback_store.get_feedback_stats()
+    return {
+        "tenant_count": 3,  # Mocked active tenants
+        "api_calls": 1250,  # Mocked total API calls
+        "feedback_stats": feedback_stats
+    }
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
