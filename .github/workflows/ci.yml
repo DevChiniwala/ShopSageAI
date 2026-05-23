@@ -27,5 +27,7 @@ jobs:
         pip install pytest httpx
         
     - name: Run pytest
+      env:
+        GOOGLE_API_KEY: "dummy_key_for_testing"
       run: |
         pytest
