@@ -47,7 +47,7 @@ class StoreResult:
 
 # ─── Cache ─────────────────────────────────────────────────────────────
 
-_cache: dict[str, tuple[list[StoreResult], float]] = {}
+from shopsage.cache.ttl_cache import price_cache as _price_cache
 
 
 def _normalize_query(query: str) -> str:
@@ -58,18 +58,16 @@ def _normalize_query(query: str) -> str:
 def _get_cached(query: str) -> Optional[list[StoreResult]]:
     """Return cached results if fresh, else None."""
     key = _normalize_query(query)
-    if key in _cache:
-        results, timestamp = _cache[key]
-        if time.time() - timestamp < SCRAPER_CACHE_TTL:
-            logger.info(f"[Cache] HIT for '{key[:30]}'")
-            return results
-        del _cache[key]
+    cached = _price_cache.get(key)
+    if cached is not None:
+        logger.info(f"[Cache] HIT for '{key[:30]}'")
+        return cached
     return None
 
 
 def _set_cache(query: str, results: list[StoreResult]) -> None:
-    """Store results in cache with current timestamp."""
-    _cache[_normalize_query(query)] = (results, time.time())
+    """Store results in TTL cache."""
+    _price_cache.set(_normalize_query(query), results, ttl=SCRAPER_CACHE_TTL)
 
 
 # ─── HTTP Helpers ──────────────────────────────────────────────────────
