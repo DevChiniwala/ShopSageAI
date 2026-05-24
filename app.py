@@ -27,6 +27,8 @@ from shopsage.memory.user_profile import ProfileStore
 from shopsage.memory.feedback_store import FeedbackStore
 from shopsage.history.conversation_store import ConversationStore
 from shopsage.history.exporter import export_to_json, export_to_csv, export_to_markdown
+from shopsage.monitoring.health import HealthChecker
+from shopsage.cache.ttl_cache import price_cache, review_cache, embedding_cache
 from shopsage.router.api_router import router as api_router
 from shopsage.config import DB_PATH
 
@@ -90,6 +92,27 @@ async def worker_status():
     return {
         "running": _price_checker.is_running,
         "stats": _price_checker.stats,
+    }
+
+
+_health_checker = HealthChecker(db_path=DB_PATH)
+
+
+@app.get("/health")
+async def health_check():
+    """Comprehensive health check for monitoring and load balancers."""
+    result = _health_checker.check_all()
+    status_code = 200 if result["status"] == "healthy" else 503
+    return JSONResponse(content=result, status_code=status_code)
+
+
+@app.get("/cache/stats")
+async def cache_stats():
+    """Return hit/miss stats for all cache layers."""
+    return {
+        "prices": price_cache.stats,
+        "reviews": review_cache.stats,
+        "embeddings": embedding_cache.stats,
     }
 
 
