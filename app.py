@@ -29,6 +29,9 @@ from shopsage.history.conversation_store import ConversationStore
 from shopsage.history.exporter import export_to_json, export_to_csv, export_to_markdown
 from shopsage.monitoring.health import HealthChecker
 from shopsage.cache.ttl_cache import price_cache, review_cache, embedding_cache
+from shopsage.webhooks.webhook_store import WebhookStore
+from shopsage.webhooks.dispatcher import WebhookDispatcher
+from shopsage.analytics.search_tracker import SearchTracker
 from shopsage.router.api_router import router as api_router
 from shopsage.config import DB_PATH
 
@@ -67,6 +70,13 @@ _feedback_store = FeedbackStore(db_path=DB_PATH)
 
 # Conversation history
 _conversation_store = ConversationStore(db_path=DB_PATH)
+
+# Webhook system
+_webhook_store = WebhookStore(db_path=DB_PATH)
+_webhook_dispatcher = WebhookDispatcher(db_path=DB_PATH)
+
+# Search analytics
+_search_tracker = SearchTracker(db_path=DB_PATH)
 
 # Include SaaS API Router
 app.include_router(api_router)
@@ -174,6 +184,9 @@ async def chat(request: ChatRequest):
 
     # Save to conversation history
     _conversation_store.save_exchange(session_id, message, response, route)
+
+    # Track search query for analytics
+    _search_tracker.track(session_id, message, route)
 
     return ChatResponse(response=response, route=route, session_id=session_id)
 
@@ -495,6 +508,106 @@ async def delete_conversation(session_id: str):
     """Delete all messages in a session."""
     count = _conversation_store.delete_session(session_id)
     return {"deleted": count, "session_id": session_id}
+
+
+# ─── Webhook Endpoints ─────────────────────────────────────────────────
+
+
+class WebhookRegisterRequest(BaseModel):
+    url: str
+    events: Optional[list] = None
+
+
+@app.post("/webhooks")
+async def register_webhook(
+    req: WebhookRegisterRequest,
+    session_id: str = "",
+):
+    """
+    Register a webhook URL to receive event notifications.
+    """
+    tenant_id = session_id or "default"
+    wh = _webhook_store.register(
+        tenant_id=tenant_id,
+        url=req.url,
+        events=req.events,
+    )
+    return {
+        "id": wh.id,
+        "url": wh.url,
+        "events": wh.events,
+        "secret": wh.secret,
+    }
+
+
+@app.get("/webhooks/{tenant_id}")
+async def list_webhooks(tenant_id: str):
+    """List all webhooks for a tenant."""
+    hooks = _webhook_store.get_by_tenant(tenant_id)
+    return {
+        "count": len(hooks),
+        "webhooks": [
+            {
+                "id": h.id, "url": h.url, "events": h.events,
+                "is_active": h.is_active,
+                "delivery_count": h.delivery_count,
+                "failure_count": h.failure_count,
+            }
+            for h in hooks
+        ],
+    }
+
+
+@app.delete("/webhooks/{tenant_id}/{webhook_id}")
+async def delete_webhook(tenant_id: str, webhook_id: str):
+    """Deactivate a webhook."""
+    success = _webhook_store.deactivate(webhook_id, tenant_id)
+    if success:
+        return {"success": True}
+    return JSONResponse(status_code=404, content={"error": "Webhook not found."})
+
+
+@app.get("/webhooks/{webhook_id}/logs")
+async def webhook_logs(webhook_id: str, limit: int = 20):
+    """Get delivery logs for a webhook."""
+    logs = _webhook_store.get_delivery_logs(webhook_id, limit)
+    return {"count": len(logs), "logs": logs}
+
+
+# ─── Search Analytics Endpoints ────────────────────────────────────────
+
+
+@app.get("/analytics/search/popular")
+async def popular_searches(limit: int = 20, hours: int = 24):
+    """Get the most popular search queries."""
+    return {
+        "period_hours": hours,
+        "queries": _search_tracker.get_popular_queries(limit, hours),
+    }
+
+
+@app.get("/analytics/search/demand")
+async def demand_signals(limit: int = 20, hours: int = 48):
+    """Get zero-result queries — products users want but can't find."""
+    return {
+        "period_hours": hours,
+        "zero_result_queries": _search_tracker.get_zero_result_queries(limit, hours),
+    }
+
+
+@app.get("/analytics/search/volume")
+async def search_volume(hours: int = 24):
+    """Get search volume statistics."""
+    return _search_tracker.get_search_volume(hours)
+
+
+@app.get("/analytics/search/trend")
+async def search_trend(hours: int = 24):
+    """Get hourly search count trend."""
+    return {
+        "period_hours": hours,
+        "trend": _search_tracker.get_hourly_trend(hours),
+    }
 
 
 @app.exception_handler(Exception)
