@@ -110,6 +110,22 @@ class TenantStore:
             logger.error(f"Error retrieving tenant by key: {e}")
             return None
 
+    def get_tenant(self, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve a tenant by their ID.
+        """
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.execute(
+                    "SELECT * FROM tenants WHERE id = ?",
+                    (tenant_id,)
+                )
+                row = cursor.fetchone()
+                return dict(row) if row else None
+        except sqlite3.Error as e:
+            logger.error(f"Error retrieving tenant by ID: {e}")
+            return None
+
     def get_all_tenants(self) -> List[Dict[str, Any]]:
         """Return all tenants (for admin view)."""
         try:

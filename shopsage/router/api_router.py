@@ -18,6 +18,8 @@ from shopsage.auth.api_key import verify_api_key
 from shopsage.auth.rate_limiter import enforce_rate_limit, get_rate_limiter, RateLimiter
 from shopsage.auth.tenant_store import TenantStore
 from shopsage.analytics.tracker import AnalyticsStore
+from shopsage.billing.usage_tracker import UsageTracker
+from shopsage.billing.billing_engine import BillingEngine
 from shopsage.agent.shopping_agent import get_shopping_response
 from shopsage.config import DB_PATH
 
@@ -25,8 +27,10 @@ logger = logging.getLogger("shopsage.router.api_router")
 
 router = APIRouter(prefix="/api/v1", tags=["SaaS API"])
 
-_analytics = AnalyticsStore()
 _tenants = TenantStore(db_path=DB_PATH)
+_analytics = AnalyticsStore(db_path=DB_PATH)
+_usage_tracker = UsageTracker(db_path=DB_PATH)
+_billing_engine = BillingEngine(db_path=DB_PATH)
 
 
 # ─── Request / Response Models ─────────────────────────────────────────
@@ -80,15 +84,15 @@ async def chat_endpoint(
     agent_response = get_shopping_response(request.message, request.session_id)
 
     # Track event
+    event_data = {
+        "message_length": len(request.message),
+        "response_length": len(agent_response),
+        "plan": plan,
+    }
     _analytics.log_event(
         tenant_id=tenant["id"],
         session_id=request.session_id,
         event_type="chat",
-        event_data={
-            "message_length": len(request.message),
-            "response_length": len(agent_response),
-            "plan": plan,
-        },
     )
 
     limiter: RateLimiter = get_rate_limiter()
@@ -224,3 +228,32 @@ async def deactivate_tenant(
         raise HTTPException(status_code=404, detail="Tenant not found.")
 
     return {"success": True, "tenant_id": tenant_id, "status": "deactivated"}
+
+
+# ─── Billing (Admin) ───────────────────────────────────────────────────
+
+
+@router.get("/admin/billing/{tenant_id}", summary="Get Tenant Bill")
+async def get_tenant_bill(
+    tenant_id: str,
+    month: Optional[str] = None,
+    tenant: Dict[str, Any] = Depends(verify_api_key),
+) -> Dict[str, Any]:
+    """
+    Get the current or historical bill for a tenant.
+    Requires enterprise plan to view other tenants.
+    """
+    if tenant["id"] != tenant_id and tenant.get("plan") != "enterprise":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot view billing for other tenants unless enterprise.",
+        )
+
+    try:
+        bill = _billing_engine.calculate_current_bill(tenant_id, month)
+        if not month:
+            prediction = _billing_engine.predict_end_of_month(tenant_id)
+            bill["prediction"] = prediction
+        return bill
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
