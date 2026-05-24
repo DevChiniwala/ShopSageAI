@@ -6,6 +6,7 @@ RAG, Semantic Routing, User Memory, and advanced product search.
 """
 
 import uuid
+import json
 import logging
 from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
@@ -24,6 +25,8 @@ from shopsage.monetise.deal_alerts import DealAlertStore
 from shopsage.workers.price_checker import PriceCheckerWorker
 from shopsage.memory.user_profile import ProfileStore
 from shopsage.memory.feedback_store import FeedbackStore
+from shopsage.history.conversation_store import ConversationStore
+from shopsage.history.exporter import export_to_json, export_to_csv, export_to_markdown
 from shopsage.router.api_router import router as api_router
 from shopsage.config import DB_PATH
 
@@ -59,6 +62,9 @@ _price_checker = PriceCheckerWorker(db_path=DB_PATH)
 
 # Feedback store
 _feedback_store = FeedbackStore(db_path=DB_PATH)
+
+# Conversation history
+_conversation_store = ConversationStore(db_path=DB_PATH)
 
 # Include SaaS API Router
 app.include_router(api_router)
@@ -142,6 +148,9 @@ async def chat(request: ChatRequest):
         response = get_chitchat_response(message, session_id)
 
     logger.info(f"[Session {session_id[:8]}] Response: {response[:80]}...")
+
+    # Save to conversation history
+    _conversation_store.save_exchange(session_id, message, response, route)
 
     return ChatResponse(response=response, route=route, session_id=session_id)
 
@@ -390,6 +399,80 @@ async def dashboard_stats():
         "api_calls": 1250,  # Mocked total API calls
         "feedback_stats": feedback_stats
     }
+
+
+# ─── Conversation History Endpoints ────────────────────────────────────
+
+
+@app.get("/history/{session_id}")
+async def get_conversation_history(
+    session_id: str, limit: int = 50, offset: int = 0
+):
+    """Retrieve conversation history for a session."""
+    messages = _conversation_store.get_history(session_id, limit, offset)
+    stats = _conversation_store.get_session_stats(session_id)
+    return {
+        "session_id": session_id,
+        "stats": stats,
+        "messages": [
+            {
+                "id": m.id, "role": m.role, "content": m.content,
+                "route": m.route, "timestamp": m.timestamp,
+            }
+            for m in messages
+        ],
+    }
+
+
+@app.get("/history/{session_id}/export")
+async def export_conversation(session_id: str, format: str = "json"):
+    """
+    Export conversation history in JSON, CSV, or Markdown format.
+    """
+    messages = _conversation_store.get_history(session_id, limit=500)
+    if not messages:
+        return JSONResponse(status_code=404, content={"error": "No messages found."})
+
+    if format == "csv":
+        from fastapi.responses import PlainTextResponse
+        return PlainTextResponse(
+            content=export_to_csv(messages),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=shopsage_{session_id[:8]}.csv"},
+        )
+    elif format == "markdown":
+        from fastapi.responses import PlainTextResponse
+        return PlainTextResponse(
+            content=export_to_markdown(messages),
+            media_type="text/markdown",
+        )
+    else:
+        return JSONResponse(content=json.loads(export_to_json(messages)))
+
+
+@app.get("/history/{session_id}/search")
+async def search_conversation(session_id: str, q: str = ""):
+    """Search through a session's conversation history."""
+    if not q.strip():
+        return JSONResponse(status_code=400, content={"error": "Query parameter 'q' is required."})
+
+    results = _conversation_store.search_history(session_id, q.strip())
+    return {
+        "query": q,
+        "count": len(results),
+        "results": [
+            {"id": m.id, "role": m.role, "content": m.content, "timestamp": m.timestamp}
+            for m in results
+        ],
+    }
+
+
+@app.delete("/history/{session_id}")
+async def delete_conversation(session_id: str):
+    """Delete all messages in a session."""
+    count = _conversation_store.delete_session(session_id)
+    return {"deleted": count, "session_id": session_id}
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
