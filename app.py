@@ -32,6 +32,7 @@ from shopsage.cache.ttl_cache import price_cache, review_cache, embedding_cache
 from shopsage.webhooks.webhook_store import WebhookStore
 from shopsage.webhooks.dispatcher import WebhookDispatcher
 from shopsage.analytics.search_tracker import SearchTracker
+from shopsage.security.middleware import SecurityHeadersMiddleware, RateLimitHeadersMiddleware
 from shopsage.router.api_router import router as api_router
 from shopsage.config import DB_PATH
 
@@ -45,6 +46,10 @@ app = FastAPI(
     description="AI-powered intelligent shopping assistant with user memory",
     version="2.0.0",
 )
+
+# Add Security Middlewares
+app.add_middleware(RateLimitHeadersMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # CORS
 app.add_middleware(

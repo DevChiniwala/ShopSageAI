@@ -20,6 +20,8 @@ from shopsage.auth.tenant_store import TenantStore
 from shopsage.analytics.tracker import AnalyticsStore
 from shopsage.billing.usage_tracker import UsageTracker
 from shopsage.billing.billing_engine import BillingEngine
+from shopsage.security.audit_log import AuditLog
+from shopsage.security.input_sanitizer import InputSanitizer
 from shopsage.agent.shopping_agent import get_shopping_response
 from shopsage.config import DB_PATH
 
@@ -31,6 +33,8 @@ _tenants = TenantStore(db_path=DB_PATH)
 _analytics = AnalyticsStore(db_path=DB_PATH)
 _usage_tracker = UsageTracker(db_path=DB_PATH)
 _billing_engine = BillingEngine(db_path=DB_PATH)
+_audit = AuditLog(db_path=DB_PATH)
+_sanitizer = InputSanitizer()
 
 
 # ─── Request / Response Models ─────────────────────────────────────────
@@ -77,11 +81,16 @@ async def chat_endpoint(
     # Enforce rate limit
     await enforce_rate_limit(None, api_key, plan)
 
+    # Sanitize input
+    clean_msg, warning = _sanitizer.sanitize_message(request.message)
+    if warning:
+        logger.warning(f"Message sanitized for tenant {tenant['id']}: {warning}")
+
     logger.info(
         f"[API] Chat from tenant='{tenant['name']}' plan={plan} session={request.session_id[:8]}"
     )
 
-    agent_response = get_shopping_response(request.message, request.session_id)
+    agent_response = get_shopping_response(clean_msg, request.session_id)
 
     # Track event
     event_data = {
@@ -160,8 +169,21 @@ async def create_tenant(
             detail="Only enterprise tenants can create new tenants.",
         )
 
-    new_tenant = _tenants.create_tenant(name=req.name, plan=req.plan)
-    logger.info(f"[Admin] Tenant '{req.name}' created by '{tenant['name']}'")
+    # Sanitize tenant name
+    clean_name, _ = _sanitizer.sanitize_name(req.name)
+
+    new_tenant = _tenants.create_tenant(name=clean_name, plan=req.plan)
+    
+    _audit.record(
+        actor_id=tenant["id"],
+        actor_type="tenant",
+        action="create",
+        resource_type="tenant",
+        resource_id=new_tenant["id"],
+        details={"plan": req.plan, "name": clean_name},
+    )
+    
+    logger.info(f"[Admin] Tenant '{clean_name}' created by '{tenant['name']}'")
     return new_tenant
 
 
@@ -206,6 +228,15 @@ async def update_tenant_plan(
     if not success:
         raise HTTPException(status_code=404, detail="Tenant not found.")
 
+    _audit.record(
+        actor_id=tenant["id"],
+        actor_type="tenant",
+        action="update",
+        resource_type="tenant",
+        resource_id=tenant_id,
+        details={"new_plan": req.plan},
+    )
+
     return {"success": True, "tenant_id": tenant_id, "new_plan": req.plan}
 
 
@@ -226,6 +257,15 @@ async def deactivate_tenant(
     success = _tenants.deactivate_tenant(tenant_id)
     if not success:
         raise HTTPException(status_code=404, detail="Tenant not found.")
+
+    _audit.record(
+        actor_id=tenant["id"],
+        actor_type="tenant",
+        action="delete",
+        resource_type="tenant",
+        resource_id=tenant_id,
+        details={"status": "deactivated"},
+    )
 
     return {"success": True, "tenant_id": tenant_id, "status": "deactivated"}
 
