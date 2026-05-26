@@ -33,6 +33,9 @@ from shopsage.webhooks.webhook_store import WebhookStore
 from shopsage.webhooks.dispatcher import WebhookDispatcher
 from shopsage.analytics.search_tracker import SearchTracker
 from shopsage.security.middleware import SecurityHeadersMiddleware, RateLimitHeadersMiddleware
+from shopsage.events.event_bus import get_event_bus, Event
+from shopsage.events.handlers import register_all_handlers
+from shopsage.notifications.notification_center import NotificationCenter
 from shopsage.router.api_router import router as api_router
 from shopsage.config import DB_PATH
 
@@ -83,15 +86,19 @@ _webhook_dispatcher = WebhookDispatcher(db_path=DB_PATH)
 # Search analytics
 _search_tracker = SearchTracker(db_path=DB_PATH)
 
+# Notification center
+_notification_center = NotificationCenter(db_path=DB_PATH)
+
 # Include SaaS API Router
 app.include_router(api_router)
 
 
 @app.on_event("startup")
 async def startup_event():
-    """Start background workers on app startup."""
+    """Start background workers and event bus on app startup."""
     _price_checker.start()
-    logger.info("[App] Background workers started")
+    register_all_handlers()
+    logger.info("[App] Background workers and event bus started")
 
 
 @app.on_event("shutdown")
@@ -612,6 +619,50 @@ async def search_trend(hours: int = 24):
     return {
         "period_hours": hours,
         "trend": _search_tracker.get_hourly_trend(hours),
+    }
+
+
+# ─── Notification Endpoints ────────────────────────────────────────────
+
+
+@app.get("/notifications/{tenant_id}")
+async def get_notifications(tenant_id: str, unread_only: bool = False, limit: int = 50):
+    """Get notifications for a tenant."""
+    if unread_only:
+        notifs = _notification_center.get_unread(tenant_id, limit)
+    else:
+        notifs = _notification_center.get_all(tenant_id, limit)
+    return {
+        "count": len(notifs),
+        "unread_count": _notification_center.get_unread_count(tenant_id),
+        "notifications": notifs,
+    }
+
+
+@app.post("/notifications/{tenant_id}/{notification_id}/read")
+async def mark_notification_read(tenant_id: str, notification_id: str):
+    """Mark a notification as read."""
+    success = _notification_center.mark_read(notification_id, tenant_id)
+    if success:
+        return {"success": True}
+    return JSONResponse(status_code=404, content={"error": "Notification not found."})
+
+
+@app.post("/notifications/{tenant_id}/read-all")
+async def mark_all_read(tenant_id: str):
+    """Mark all notifications as read."""
+    count = _notification_center.mark_all_read(tenant_id)
+    return {"success": True, "marked_read": count}
+
+
+@app.get("/events/stats")
+async def event_bus_stats():
+    """Get event bus statistics and history."""
+    bus = get_event_bus()
+    return {
+        "stats": bus.get_stats(),
+        "subscriptions": bus.list_subscriptions(),
+        "recent_events": bus.get_history(limit=20),
     }
 
 
