@@ -22,6 +22,8 @@ from shopsage.billing.usage_tracker import UsageTracker
 from shopsage.billing.billing_engine import BillingEngine
 from shopsage.security.audit_log import AuditLog
 from shopsage.security.input_sanitizer import InputSanitizer
+from shopsage.auth.feature_flags import FeatureFlagStore
+from shopsage.auth.key_manager import APIKeyManager
 from shopsage.agent.shopping_agent import get_shopping_response
 from shopsage.config import DB_PATH
 
@@ -35,6 +37,8 @@ _usage_tracker = UsageTracker(db_path=DB_PATH)
 _billing_engine = BillingEngine(db_path=DB_PATH)
 _audit = AuditLog(db_path=DB_PATH)
 _sanitizer = InputSanitizer()
+_flags = FeatureFlagStore(db_path=DB_PATH)
+_key_manager = APIKeyManager(db_path=DB_PATH)
 
 
 # ─── Request / Response Models ─────────────────────────────────────────
@@ -297,3 +301,126 @@ async def get_tenant_bill(
         return bill
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+# ─── Feature Flags ─────────────────────────────────────────────────────
+
+
+@router.get("/features", summary="Get My Feature Flags")
+async def get_my_flags(
+    tenant: Dict[str, Any] = Depends(verify_api_key),
+) -> Dict[str, Any]:
+    """Get all resolved feature flags for the calling tenant."""
+    plan = tenant.get("plan", "free")
+    resolved = _flags.get_tenant_flags(tenant["id"], plan)
+    return {"tenant_id": tenant["id"], "plan": plan, "flags": resolved}
+
+
+@router.get("/admin/features", summary="List All Feature Flags")
+async def list_all_flags(
+    tenant: Dict[str, Any] = Depends(verify_api_key),
+) -> Dict[str, Any]:
+    """List all global feature flags. Enterprise-only."""
+    if tenant.get("plan") != "enterprise":
+        raise HTTPException(status_code=403, detail="Enterprise plan required.")
+    return {"flags": _flags.list_flags()}
+
+
+class SetFlagRequest(BaseModel):
+    enabled: bool
+
+
+@router.put("/admin/features/{tenant_id}/{flag_key}", summary="Set Tenant Flag Override")
+async def set_flag_override(
+    tenant_id: str,
+    flag_key: str,
+    req: SetFlagRequest,
+    tenant: Dict[str, Any] = Depends(verify_api_key),
+) -> Dict[str, Any]:
+    """Set a per-tenant feature flag override. Enterprise-only."""
+    if tenant.get("plan") != "enterprise":
+        raise HTTPException(status_code=403, detail="Enterprise plan required.")
+    _flags.set_tenant_override(tenant_id, flag_key, req.enabled)
+    _audit.record(
+        actor_id=tenant["id"], actor_type="admin",
+        action="update", resource_type="feature_flag",
+        resource_id=flag_key,
+        details={"tenant_id": tenant_id, "enabled": req.enabled},
+    )
+    return {"success": True, "flag": flag_key, "enabled": req.enabled}
+
+
+# ─── API Key Management ───────────────────────────────────────────────
+
+
+class CreateKeyRequest(BaseModel):
+    label: str = "default"
+    expires_in_days: Optional[int] = None
+
+
+@router.post("/keys", summary="Create API Key")
+async def create_api_key(
+    req: CreateKeyRequest,
+    tenant: Dict[str, Any] = Depends(verify_api_key),
+) -> Dict[str, Any]:
+    """Create a new API key for the calling tenant."""
+    result = _key_manager.create_key(
+        tenant["id"], label=req.label, expires_in_days=req.expires_in_days
+    )
+    _audit.record(
+        actor_id=tenant["id"], actor_type="tenant",
+        action="create", resource_type="api_key",
+        resource_id=result["id"],
+    )
+    return result
+
+
+@router.get("/keys", summary="List API Keys")
+async def list_api_keys(
+    tenant: Dict[str, Any] = Depends(verify_api_key),
+) -> Dict[str, Any]:
+    """List all API keys for the calling tenant."""
+    keys = _key_manager.list_keys(tenant["id"])
+    return {"count": len(keys), "keys": keys}
+
+
+class RotateKeyRequest(BaseModel):
+    old_key_id: str
+    grace_period_hours: int = 24
+    label: str = "rotated"
+
+
+@router.post("/keys/rotate", summary="Rotate API Key")
+async def rotate_api_key(
+    req: RotateKeyRequest,
+    tenant: Dict[str, Any] = Depends(verify_api_key),
+) -> Dict[str, Any]:
+    """Rotate an API key with a grace period."""
+    new_key = _key_manager.rotate_key(
+        tenant["id"], req.old_key_id,
+        grace_period_hours=req.grace_period_hours, label=req.label,
+    )
+    _audit.record(
+        actor_id=tenant["id"], actor_type="tenant",
+        action="rotate", resource_type="api_key",
+        resource_id=req.old_key_id,
+        details={"new_key_id": new_key["id"], "grace_hours": req.grace_period_hours},
+    )
+    return new_key
+
+
+@router.delete("/keys/{key_id}", summary="Revoke API Key")
+async def revoke_api_key(
+    key_id: str,
+    tenant: Dict[str, Any] = Depends(verify_api_key),
+) -> Dict[str, Any]:
+    """Immediately revoke an API key."""
+    success = _key_manager.revoke_key(key_id, tenant["id"])
+    if success:
+        _audit.record(
+            actor_id=tenant["id"], actor_type="tenant",
+            action="revoke", resource_type="api_key",
+            resource_id=key_id,
+        )
+        return {"success": True}
+    return JSONResponse(status_code=404, content={"error": "Key not found."})
