@@ -43,6 +43,10 @@ from shopsage.plugins.manager import PluginManager, register_builtin_plugins
 from shopsage.config_dynamic import DynamicConfig
 from shopsage.admin.dashboard_api import AdminDashboard
 from shopsage.router.api_router import router as api_router
+from shopsage.router.versioning import (
+    create_default_registry, VersioningMiddleware,
+)
+from shopsage.analytics.rate_limit_analytics import RateLimitAnalytics
 from shopsage.config import DB_PATH
 
 # ─── Logging ───────────────────────────────────────────────────────────
@@ -59,6 +63,10 @@ app = FastAPI(
 # Add Security Middlewares
 app.add_middleware(RateLimitHeadersMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
+
+# API Versioning
+_version_registry = create_default_registry()
+app.add_middleware(VersioningMiddleware, registry=_version_registry)
 
 # CORS
 app.add_middleware(
@@ -112,6 +120,9 @@ _plugin_manager = PluginManager()
 
 # Dynamic config
 _dynamic_config = DynamicConfig(db_path=DB_PATH)
+
+# Rate limit analytics
+_rl_analytics = RateLimitAnalytics(db_path=DB_PATH)
 
 # Include SaaS API Router
 app.include_router(api_router)
@@ -866,6 +877,64 @@ async def set_config_value(req: SetConfigRequest):
 async def list_config_entries(tenant_id: str = ""):
     """List all config entries with metadata."""
     return {"config": _dynamic_config.list_config(tenant_id)}
+
+
+# ─── Versioning Endpoints ──────────────────────────────────────────────
+
+
+@app.get("/api/versions")
+async def list_api_versions():
+    """List all API versions with status and feature counts."""
+    return {
+        "versions": _version_registry.list_versions(),
+        "active": _version_registry.get_active_versions(),
+        "features": _version_registry.get_feature_matrix(),
+    }
+
+
+@app.get("/api/versions/migrate")
+async def get_migration_guide(from_version: str = "v1", to: str = "v2"):
+    """Get migration guide between two API versions."""
+    guide = _version_registry.get_migration_guide(from_version, to)
+    if not guide:
+        return JSONResponse(
+            status_code=404,
+            content={"error": f"No migration guide from {from_version} to {to}"},
+        )
+    return guide
+
+
+# ─── Rate Limit Analytics Endpoints ────────────────────────────────────
+
+
+@app.get("/admin/rate-limits/stats")
+async def rate_limit_global_stats(hours: int = 24):
+    """System-wide rate limit statistics."""
+    return _rl_analytics.get_global_stats(hours=hours)
+
+
+@app.get("/admin/rate-limits/tenants/{tenant_id}")
+async def rate_limit_tenant_summary(tenant_id: str, hours: int = 24):
+    """Per-tenant rate limit summary."""
+    return _rl_analytics.get_tenant_summary(tenant_id, hours=hours)
+
+
+@app.get("/admin/rate-limits/trends")
+async def rate_limit_trends(tenant_id: str = "", hours: int = 24):
+    """Hourly rate limit trends, optionally filtered by tenant."""
+    return {"trends": _rl_analytics.get_hourly_trends(tenant_id, hours=hours)}
+
+
+@app.get("/admin/rate-limits/top-consumers")
+async def rate_limit_top_consumers(hours: int = 24, limit: int = 10):
+    """Top API consumers by request volume."""
+    return {"consumers": _rl_analytics.get_top_consumers(hours=hours, limit=limit)}
+
+
+@app.get("/admin/rate-limits/bursts")
+async def rate_limit_bursts(threshold: float = 3.0, minutes: int = 5):
+    """Detect tenants with unusual request bursts."""
+    return {"bursts": _rl_analytics.detect_bursts(threshold, minutes)}
 
 
 @app.exception_handler(Exception)
