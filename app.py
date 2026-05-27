@@ -37,6 +37,8 @@ from shopsage.events.event_bus import get_event_bus, Event
 from shopsage.events.handlers import register_all_handlers
 from shopsage.notifications.notification_center import NotificationCenter
 from shopsage.workers.job_queue import JobQueue
+from shopsage.workers.scheduler import TaskScheduler, register_default_tasks
+from shopsage.export.pipeline import ExportPipeline
 from shopsage.admin.dashboard_api import AdminDashboard
 from shopsage.router.api_router import router as api_router
 from shopsage.config import DB_PATH
@@ -97,23 +99,33 @@ _job_queue = JobQueue(db_path=DB_PATH)
 # Admin dashboard
 _admin_dashboard = AdminDashboard(db_path=DB_PATH)
 
+# Export pipeline
+_export_pipeline = ExportPipeline(db_path=DB_PATH)
+
+# Task scheduler
+_scheduler = TaskScheduler(job_queue=_job_queue)
+
 # Include SaaS API Router
 app.include_router(api_router)
 
 
 @app.on_event("startup")
 async def startup_event():
-    """Start background workers and event bus on app startup."""
+    """Start background workers, scheduler, and event bus on app startup."""
     _price_checker.start()
     _job_queue.start_worker(poll_interval=3.0)
+    register_default_tasks(_scheduler)
+    _scheduler.start(check_interval=30.0)
     register_all_handlers()
-    logger.info("[App] Background workers, job queue, and event bus started")
+    logger.info("[App] Background workers, job queue, scheduler, and event bus started")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Gracefully stop background workers."""
     await _price_checker.stop()
+    _job_queue.stop_worker()
+    _scheduler.stop()
     logger.info("[App] Background workers stopped")
 
 
@@ -724,6 +736,68 @@ async def cancel_job(job_id: str):
 async def admin_dashboard():
     """Get aggregated admin dashboard metrics."""
     return _admin_dashboard.get_overview()
+
+
+# ─── Export Endpoints ─────────────────────────────────────────────────
+
+
+class ExportUsageRequest(BaseModel):
+    tenant_id: str
+    year_month: str
+    format: str = "csv"
+
+
+@app.post("/export/usage")
+async def export_usage(req: ExportUsageRequest):
+    """Export usage data for a tenant."""
+    result = _export_pipeline.export_usage(req.tenant_id, req.year_month, req.format)
+    return result
+
+
+@app.post("/export/audit")
+async def export_audit(tenant_id: str = "", limit: int = 1000, format: str = "csv"):
+    """Export audit log entries."""
+    result = _export_pipeline.export_audit_log(tenant_id, limit, format)
+    return result
+
+
+@app.post("/export/search")
+async def export_search(hours: int = 168, format: str = "csv"):
+    """Export search analytics."""
+    result = _export_pipeline.export_search_analytics(hours, format)
+    return result
+
+
+@app.get("/exports")
+async def list_exports(tenant_id: str = ""):
+    """List all generated exports."""
+    exports = _export_pipeline.list_exports(tenant_id)
+    return {"count": len(exports), "exports": exports}
+
+
+# ─── Scheduler Endpoints ──────────────────────────────────────────────
+
+
+@app.get("/scheduler")
+async def scheduler_status():
+    """List all scheduled tasks."""
+    return {"tasks": _scheduler.list_tasks()}
+
+
+@app.post("/scheduler/{task_name}/disable")
+async def disable_task(task_name: str):
+    """Disable a scheduled task."""
+    if _scheduler.disable(task_name):
+        return {"success": True, "task": task_name, "enabled": False}
+    return JSONResponse(status_code=404, content={"error": "Task not found."})
+
+
+@app.post("/scheduler/{task_name}/enable")
+async def enable_task(task_name: str):
+    """Enable a scheduled task."""
+    if _scheduler.enable(task_name):
+        return {"success": True, "task": task_name, "enabled": True}
+    return JSONResponse(status_code=404, content={"error": "Task not found."})
 
 
 @app.exception_handler(Exception)
