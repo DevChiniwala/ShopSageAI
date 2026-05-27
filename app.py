@@ -14,7 +14,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import Optional
+from typing import Any, Optional
 
 from shopsage.router.semantic_router import classify_query
 from shopsage.chain.chitchat_chain import get_chitchat_response
