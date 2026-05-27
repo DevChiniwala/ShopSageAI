@@ -1,0 +1,1 @@
+"""ShopSage AI — Admin module."""
