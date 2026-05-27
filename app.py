@@ -39,6 +39,8 @@ from shopsage.notifications.notification_center import NotificationCenter
 from shopsage.workers.job_queue import JobQueue
 from shopsage.workers.scheduler import TaskScheduler, register_default_tasks
 from shopsage.export.pipeline import ExportPipeline
+from shopsage.plugins.manager import PluginManager, register_builtin_plugins
+from shopsage.config_dynamic import DynamicConfig
 from shopsage.admin.dashboard_api import AdminDashboard
 from shopsage.router.api_router import router as api_router
 from shopsage.config import DB_PATH
@@ -105,6 +107,12 @@ _export_pipeline = ExportPipeline(db_path=DB_PATH)
 # Task scheduler
 _scheduler = TaskScheduler(job_queue=_job_queue)
 
+# Plugin manager
+_plugin_manager = PluginManager()
+
+# Dynamic config
+_dynamic_config = DynamicConfig(db_path=DB_PATH)
+
 # Include SaaS API Router
 app.include_router(api_router)
 
@@ -116,6 +124,7 @@ async def startup_event():
     _job_queue.start_worker(poll_interval=3.0)
     register_default_tasks(_scheduler)
     _scheduler.start(check_interval=30.0)
+    register_builtin_plugins(_plugin_manager)
     register_all_handlers()
     logger.info("[App] Background workers, job queue, scheduler, and event bus started")
 
@@ -798,6 +807,65 @@ async def enable_task(task_name: str):
     if _scheduler.enable(task_name):
         return {"success": True, "task": task_name, "enabled": True}
     return JSONResponse(status_code=404, content={"error": "Task not found."})
+
+
+# ─── Plugin Endpoints ─────────────────────────────────────────────────
+
+
+@app.get("/plugins")
+async def list_plugins():
+    """List all registered plugins."""
+    return {
+        "plugins": _plugin_manager.list_plugins(),
+        "stats": _plugin_manager.get_stats(),
+    }
+
+
+@app.post("/plugins/{plugin_name}/disable")
+async def disable_plugin(plugin_name: str):
+    """Disable a plugin."""
+    if _plugin_manager.disable(plugin_name):
+        return {"success": True, "plugin": plugin_name, "enabled": False}
+    return JSONResponse(status_code=404, content={"error": "Plugin not found."})
+
+
+@app.post("/plugins/{plugin_name}/enable")
+async def enable_plugin(plugin_name: str):
+    """Enable a plugin."""
+    if _plugin_manager.enable(plugin_name):
+        return {"success": True, "plugin": plugin_name, "enabled": True}
+    return JSONResponse(status_code=404, content={"error": "Plugin not found."})
+
+
+# ─── Dynamic Config Endpoints ─────────────────────────────────────────
+
+
+@app.get("/config")
+async def get_config():
+    """Get all global runtime configuration."""
+    return _dynamic_config.get_all()
+
+
+class SetConfigRequest(BaseModel):
+    key: str
+    value: Any
+    value_type: str = "str"
+    tenant_id: str = ""
+
+
+@app.put("/config")
+async def set_config_value(req: SetConfigRequest):
+    """Set a runtime configuration value."""
+    _dynamic_config.set(
+        req.key, req.value, req.value_type, tenant_id=req.tenant_id
+    )
+    return {"success": True, "key": req.key, "value": req.value}
+
+
+@app.get("/config/list")
+async def list_config_entries(tenant_id: str = ""):
+    """List all config entries with metadata."""
+    return {"config": _dynamic_config.list_config(tenant_id)}
 
 
 @app.exception_handler(Exception)
