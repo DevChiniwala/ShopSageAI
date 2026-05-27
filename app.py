@@ -36,6 +36,8 @@ from shopsage.security.middleware import SecurityHeadersMiddleware, RateLimitHea
 from shopsage.events.event_bus import get_event_bus, Event
 from shopsage.events.handlers import register_all_handlers
 from shopsage.notifications.notification_center import NotificationCenter
+from shopsage.workers.job_queue import JobQueue
+from shopsage.admin.dashboard_api import AdminDashboard
 from shopsage.router.api_router import router as api_router
 from shopsage.config import DB_PATH
 
@@ -89,6 +91,12 @@ _search_tracker = SearchTracker(db_path=DB_PATH)
 # Notification center
 _notification_center = NotificationCenter(db_path=DB_PATH)
 
+# Job queue
+_job_queue = JobQueue(db_path=DB_PATH)
+
+# Admin dashboard
+_admin_dashboard = AdminDashboard(db_path=DB_PATH)
+
 # Include SaaS API Router
 app.include_router(api_router)
 
@@ -97,8 +105,9 @@ app.include_router(api_router)
 async def startup_event():
     """Start background workers and event bus on app startup."""
     _price_checker.start()
+    _job_queue.start_worker(poll_interval=3.0)
     register_all_handlers()
-    logger.info("[App] Background workers and event bus started")
+    logger.info("[App] Background workers, job queue, and event bus started")
 
 
 @app.on_event("shutdown")
@@ -664,6 +673,57 @@ async def event_bus_stats():
         "subscriptions": bus.list_subscriptions(),
         "recent_events": bus.get_history(limit=20),
     }
+
+
+# ─── Job Queue Endpoints ───────────────────────────────────────────────
+
+
+class EnqueueJobRequest(BaseModel):
+    job_type: str
+    payload: Optional[dict] = None
+    priority: int = 0
+    delay_seconds: int = 0
+
+
+@app.post("/jobs")
+async def enqueue_job(req: EnqueueJobRequest):
+    """Enqueue a background job."""
+    job_id = _job_queue.enqueue(
+        req.job_type, req.payload, req.priority, delay_seconds=req.delay_seconds
+    )
+    return {"job_id": job_id, "status": "pending"}
+
+
+@app.get("/jobs/{job_id}")
+async def get_job_status(job_id: str):
+    """Get job status."""
+    job = _job_queue.get_job(job_id)
+    if not job:
+        return JSONResponse(status_code=404, content={"error": "Job not found."})
+    return job
+
+
+@app.get("/jobs")
+async def get_queue_stats():
+    """Get job queue statistics."""
+    return _job_queue.get_stats()
+
+
+@app.delete("/jobs/{job_id}")
+async def cancel_job(job_id: str):
+    """Cancel a pending job."""
+    if _job_queue.cancel_job(job_id):
+        return {"success": True}
+    return JSONResponse(status_code=404, content={"error": "Job not found or not pending."})
+
+
+# ─── Admin Dashboard Endpoint ─────────────────────────────────────────
+
+
+@app.get("/admin/dashboard")
+async def admin_dashboard():
+    """Get aggregated admin dashboard metrics."""
+    return _admin_dashboard.get_overview()
 
 
 @app.exception_handler(Exception)
