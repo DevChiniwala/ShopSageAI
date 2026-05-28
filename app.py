@@ -47,6 +47,8 @@ from shopsage.router.versioning import (
     create_default_registry, VersioningMiddleware,
 )
 from shopsage.analytics.rate_limit_analytics import RateLimitAnalytics
+from shopsage.retention.policy_manager import RetentionPolicyManager
+from shopsage.onboarding.manager import OnboardingManager
 from shopsage.config import DB_PATH
 
 # ─── Logging ───────────────────────────────────────────────────────────
@@ -123,6 +125,12 @@ _dynamic_config = DynamicConfig(db_path=DB_PATH)
 
 # Rate limit analytics
 _rl_analytics = RateLimitAnalytics(db_path=DB_PATH)
+
+# Data retention policy manager
+_retention_mgr = RetentionPolicyManager(db_path=DB_PATH)
+
+# Tenant onboarding manager
+_onboarding_mgr = OnboardingManager(db_path=DB_PATH)
 
 # Include SaaS API Router
 app.include_router(api_router)
@@ -935,6 +943,120 @@ async def rate_limit_top_consumers(hours: int = 24, limit: int = 10):
 async def rate_limit_bursts(threshold: float = 3.0, minutes: int = 5):
     """Detect tenants with unusual request bursts."""
     return {"bursts": _rl_analytics.detect_bursts(threshold, minutes)}
+
+
+# ─── Data Retention Endpoints ──────────────────────────────────────────
+
+
+class RetentionPolicyRequest(BaseModel):
+    category: str
+    retention_days: int
+    action: str = "delete"
+    grace_period_days: int = 7
+    notify_before_days: int = 3
+    tenant_id: str = ""
+    enabled: bool = True
+
+
+@app.get("/admin/retention/policies")
+async def list_retention_policies(tenant_id: str = ""):
+    """List all data retention policies."""
+    return {"policies": _retention_mgr.list_policies(tenant_id)}
+
+
+@app.post("/admin/retention/policies")
+async def set_retention_policy(req: RetentionPolicyRequest):
+    """Create or update a data retention policy."""
+    policy = _retention_mgr.set_policy(
+        category=req.category,
+        retention_days=req.retention_days,
+        action=req.action,
+        grace_period_days=req.grace_period_days,
+        notify_before_days=req.notify_before_days,
+        tenant_id=req.tenant_id,
+        enabled=req.enabled,
+    )
+    return {"policy": policy.to_dict()}
+
+
+@app.post("/admin/retention/enforce")
+async def enforce_retention(category: str = "", tenant_id: str = "", dry_run: bool = True):
+    """Enforce retention policies (all categories or a specific one)."""
+    if category:
+        event = _retention_mgr.enforce(category, tenant_id, dry_run)
+        return {"event": event.to_dict()}
+    results = _retention_mgr.enforce_all(tenant_id, dry_run)
+    return {"events": results}
+
+
+@app.get("/admin/retention/compliance")
+async def retention_compliance_report(tenant_id: str = ""):
+    """Generate a data retention compliance report."""
+    return _retention_mgr.compliance_report(tenant_id)
+
+
+@app.get("/admin/retention/events")
+async def retention_event_history(category: str = "", tenant_id: str = "", limit: int = 50):
+    """View retention enforcement event history."""
+    return {"events": _retention_mgr.get_event_history(category, tenant_id, limit)}
+
+
+# ─── Tenant Onboarding Endpoints ──────────────────────────────────────
+
+
+class TenantRegisterRequest(BaseModel):
+    company_name: str
+    email: str
+    plan: str = "free"
+
+
+@app.post("/onboarding/register")
+async def register_tenant(req: TenantRegisterRequest):
+    """Self-service tenant registration."""
+    try:
+        reg = _onboarding_mgr.register_tenant(
+            company_name=req.company_name,
+            email=req.email,
+            plan=req.plan,
+        )
+        return {"tenant": reg.to_dict()}
+    except ValueError as e:
+        return JSONResponse(status_code=409, content={"error": str(e)})
+
+
+@app.post("/onboarding/activate/{tenant_id}")
+async def activate_tenant(tenant_id: str):
+    """Activate a registered tenant."""
+    try:
+        tenant = _onboarding_mgr.activate_tenant(tenant_id)
+        return {"tenant": tenant.to_dict()}
+    except ValueError as e:
+        return JSONResponse(status_code=404, content={"error": str(e)})
+
+
+@app.get("/onboarding/progress/{tenant_id}")
+async def onboarding_progress(tenant_id: str):
+    """Get onboarding progress and checklist."""
+    return _onboarding_mgr.get_progress(tenant_id)
+
+
+@app.post("/onboarding/checklist/{tenant_id}/{step_id}")
+async def complete_onboarding_step(tenant_id: str, step_id: str):
+    """Mark an onboarding checklist step as complete."""
+    completed = _onboarding_mgr.complete_step(tenant_id, step_id)
+    return {"completed": completed, "progress": _onboarding_mgr.get_progress(tenant_id)}
+
+
+@app.get("/onboarding/quotas/{tenant_id}")
+async def tenant_quotas(tenant_id: str):
+    """Get usage quotas for a tenant based on their plan."""
+    return _onboarding_mgr.get_quotas(tenant_id)
+
+
+@app.get("/admin/onboarding/stats")
+async def onboarding_stats():
+    """Get system-wide onboarding statistics."""
+    return _onboarding_mgr.get_stats()
 
 
 @app.exception_handler(Exception)
