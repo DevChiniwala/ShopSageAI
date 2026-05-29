@@ -140,9 +140,10 @@ app.include_router(api_router)
 async def startup_event():
     """Start background workers, scheduler, and event bus on app startup."""
     _price_checker.start()
-    _job_queue.start_worker(poll_interval=3.0)
-    register_default_tasks(_scheduler)
-    _scheduler.start(check_interval=30.0)
+    # Celery migration: JobQueue and TaskScheduler are now managed externally via Celery workers
+    # _job_queue.start_worker(poll_interval=3.0)
+    # register_default_tasks(_scheduler)
+    # _scheduler.start(check_interval=30.0)
     register_builtin_plugins(_plugin_manager)
     register_all_handlers()
     logger.info("[App] Background workers, job queue, scheduler, and event bus started")
@@ -152,8 +153,9 @@ async def startup_event():
 async def shutdown_event():
     """Gracefully stop background workers."""
     await _price_checker.stop()
-    _job_queue.stop_worker()
-    _scheduler.stop()
+    # Celery migration: No longer need to stop custom SQLite workers
+    # _job_queue.stop_worker()
+    # _scheduler.stop()
     logger.info("[App] Background workers stopped")
 
 
