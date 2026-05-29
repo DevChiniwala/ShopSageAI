@@ -4,7 +4,7 @@ Tests for the rate limiter — verifies sliding window logic and tier limits.
 
 import time
 import pytest
-from shopsage.auth.rate_limiter import RateLimiter, TIER_LIMITS
+from shopsage.auth.redis_rate_limiter import RedisRateLimiter as RateLimiter, TIER_LIMITS
 
 
 @pytest.fixture

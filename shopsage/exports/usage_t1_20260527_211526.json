@@ -1,0 +1,12 @@
+{
+  "data": [
+    {
+      "date": "2026-05-01",
+      "api_calls": 10,
+      "agent_runs": 0,
+      "searches": 0,
+      "cost_incurred": 0.0
+    }
+  ],
+  "count": 1
+}

@@ -6,7 +6,7 @@ Calculates current month's bill and predicts end-of-month costs.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 import calendar
 from typing import Dict, Any
 
@@ -57,7 +57,7 @@ class BillingEngine:
         If year_month is None, uses current month (YYYY-MM).
         """
         if not year_month:
-            year_month = datetime.utcnow().strftime("%Y-%m")
+            year_month = datetime.now(timezone.utc).strftime("%Y-%m")
 
         tenant = self.tenant_store.get_tenant(tenant_id)
         if not tenant:
@@ -102,7 +102,7 @@ class BillingEngine:
         """
         Predict end-of-month cost based on current run rate.
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         year_month = now.strftime("%Y-%m")
         day_of_month = now.day
         

@@ -18,7 +18,7 @@ import sqlite3
 import json
 import logging
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from shopsage.config import DB_PATH
@@ -105,7 +105,7 @@ class DynamicConfig:
 
     def _seed_defaults(self) -> None:
         """Insert default values if they don't exist."""
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         try:
             with self._conn() as conn:
                 for key, info in DEFAULTS.items():
@@ -201,7 +201,7 @@ class DynamicConfig:
             updated_by: Who made the change (for audit).
             description: Optional description update.
         """
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         serialized = json.dumps(value)
 
         try:

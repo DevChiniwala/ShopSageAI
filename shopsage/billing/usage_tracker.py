@@ -11,7 +11,7 @@ Schema:
 
 import sqlite3
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List
 
 from shopsage.config import DB_PATH
@@ -68,7 +68,7 @@ class UsageTracker:
         If date_str is None, uses today's date (YYYY-MM-DD).
         """
         if not date_str:
-            date_str = datetime.utcnow().strftime("%Y-%m-%d")
+            date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
         try:
             with self._conn() as conn:

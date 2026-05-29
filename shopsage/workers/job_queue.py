@@ -19,7 +19,7 @@ import json
 import logging
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional
 from collections import defaultdict
 
@@ -108,11 +108,11 @@ class JobQueue:
             The job ID.
         """
         job_id = str(uuid.uuid4())
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         scheduled_at = now
         if delay_seconds > 0:
             scheduled_at = (
-                datetime.utcnow() + timedelta(seconds=delay_seconds)
+                datetime.now(timezone.utc) + timedelta(seconds=delay_seconds)
             ).isoformat()
 
         try:
@@ -153,7 +153,7 @@ class JobQueue:
 
         Returns True if a job was processed, False if queue is empty.
         """
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         try:
             with self._conn() as conn:
@@ -208,7 +208,7 @@ class JobQueue:
 
     def _complete_job(self, job_id: str) -> None:
         """Mark job as completed."""
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         try:
             with self._conn() as conn:
                 conn.execute(
@@ -222,7 +222,7 @@ class JobQueue:
 
     def _fail_job(self, job_id: str, error: str) -> None:
         """Mark job as failed."""
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         try:
             with self._conn() as conn:
                 conn.execute(
@@ -239,7 +239,7 @@ class JobQueue:
         """Schedule a retry with exponential backoff."""
         backoff = (retry_count ** 2) * 5  # 5s, 20s, 45s...
         scheduled_at = (
-            datetime.utcnow() + timedelta(seconds=backoff)
+            datetime.now(timezone.utc) + timedelta(seconds=backoff)
         ).isoformat()
 
         try:
@@ -351,7 +351,7 @@ class JobQueue:
 
     def purge_completed(self, days: int = 7) -> int:
         """Delete completed jobs older than N days."""
-        cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
         try:
             with self._conn() as conn:
                 cursor = conn.execute(

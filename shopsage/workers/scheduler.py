@@ -14,7 +14,7 @@ Tasks are defined declaratively and registered at startup.
 import logging
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Callable, Dict, Any, List, Optional
 from dataclasses import dataclass, field
 
@@ -138,7 +138,7 @@ class TaskScheduler:
         """Main loop — checks which tasks are due and enqueues them."""
         while self._running:
             try:
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
 
                 for task in self._tasks.values():
                     if not task.enabled:
@@ -208,9 +208,9 @@ class TaskScheduler:
 
 def _handle_cache_cleanup(payload: Dict[str, Any]) -> None:
     """Purge expired entries from all caches."""
-    from shopsage.cache.ttl_cache import price_cache, review_cache, embedding_cache
+    from shopsage.cache.distributed_cache import price_cache, review_cache, embedding_cache
     for cache in [price_cache, review_cache, embedding_cache]:
-        cache.clear_expired()
+        cache.clear()
     logger.info("[Task] Cache cleanup complete")
 
 

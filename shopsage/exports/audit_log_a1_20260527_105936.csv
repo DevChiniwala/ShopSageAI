@@ -1,0 +1,3 @@
+id,timestamp,actor_id,actor_type,action,resource_type,resource_id
+8e4e18a3-5f25-44a3-9535-1f909879f04f,2026-05-27T10:59:36.858885,a1,admin,delete,tenant,t2
+29d39e8d-7f88-4d85-918b-be3e40d47b19,2026-05-27T10:59:36.853089,a1,admin,create,tenant,t1

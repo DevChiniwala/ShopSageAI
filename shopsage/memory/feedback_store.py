@@ -1,7 +1,7 @@
 import sqlite3
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
 try:
@@ -45,7 +45,7 @@ class FeedbackStore:
         """
         try:
             feedback_id = str(uuid.uuid4())
-            timestamp = datetime.utcnow().isoformat()
+            timestamp = datetime.now(timezone.utc).isoformat()
             
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()

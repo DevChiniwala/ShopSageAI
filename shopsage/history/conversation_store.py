@@ -12,7 +12,7 @@ Schema:
 import sqlite3
 import uuid
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from dataclasses import dataclass, asdict
 from typing import List, Optional, Dict, Any
 
@@ -103,7 +103,7 @@ class ConversationStore:
             role=role,
             content=content,
             route=route,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
         try:

@@ -11,12 +11,19 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 LLM_MODEL = "gemini-2.0-flash"
 EMBEDDING_MODEL = "models/gemini-embedding-001"
 
-# ─── Paths ─────────────────────────────────────────────────────────────
+# ─── Paths & Databases ──────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
-DB_PATH = os.path.join(DATA_DIR, "products.db")
+DB_PATH = os.path.join(DATA_DIR, "shopsage.sqlite3")
 POLICY_PATH = os.path.join(DATA_DIR, "policy.txt")
 FAISS_INDEX_PATH = os.path.join(DATA_DIR, "faiss_index")
+
+# SQLAlchemy connection string. Defaults to async SQLite for local dev.
+# For production PostgreSQL, set this to e.g., postgresql+asyncpg://user:pass@host:port/dbname
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", 
+    f"sqlite+aiosqlite:///{DB_PATH}"
+)
 
 # ─── RAG Configuration ────────────────────────────────────────────────
 CHUNK_SIZE = 500

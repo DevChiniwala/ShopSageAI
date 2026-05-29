@@ -47,7 +47,7 @@ class StoreResult:
 
 # ─── Cache ─────────────────────────────────────────────────────────────
 
-from shopsage.cache.ttl_cache import price_cache as _price_cache
+from shopsage.cache.distributed_cache import price_cache as _price_cache
 
 
 def _normalize_query(query: str) -> str:

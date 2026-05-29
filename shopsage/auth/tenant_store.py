@@ -2,7 +2,7 @@ import sqlite3
 import uuid
 import secrets
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 
 from shopsage.config import DB_PATH
@@ -65,7 +65,7 @@ class TenantStore:
             Dict[str, Any]: The created tenant record including the API key.
         """
         tenant_id = str(uuid.uuid4())
-        created_at = datetime.utcnow().isoformat()
+        created_at = datetime.now(timezone.utc).isoformat()
         if not api_key:
             api_key = f"sk-{secrets.token_urlsafe(32)}"
         

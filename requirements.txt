@@ -22,3 +22,5 @@ alembic>=1.13
 asyncpg>=0.30
 psycopg2-binary>=2.9
 aiosqlite>=0.20
+redis>=5.0
+celery>=5.4

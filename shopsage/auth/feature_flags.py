@@ -19,7 +19,7 @@ import sqlite3
 import uuid
 import logging
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Set
 
 from shopsage.config import DB_PATH
@@ -100,7 +100,7 @@ class FeatureFlagStore:
 
     def _seed_defaults(self) -> None:
         """Insert default flags if they don't exist."""
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         try:
             with self._conn() as conn:
                 for key in PLAN_GATED_FLAGS:
@@ -169,7 +169,7 @@ class FeatureFlagStore:
         self, tenant_id: str, flag_key: str, enabled: bool
     ) -> None:
         """Set a per-tenant flag override."""
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         try:
             with self._conn() as conn:
                 conn.execute(
@@ -228,7 +228,7 @@ class FeatureFlagStore:
                     """INSERT INTO feature_flags (flag_key, description, default_enabled, created_at)
                        VALUES (?, ?, ?, ?)""",
                     (flag_key, description, int(default_enabled),
-                     datetime.utcnow().isoformat()),
+                     datetime.now(timezone.utc).isoformat()),
                 )
                 conn.commit()
             self._refresh_global_cache()

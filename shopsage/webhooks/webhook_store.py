@@ -15,7 +15,7 @@ import uuid
 import json
 import secrets
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 
@@ -124,7 +124,7 @@ class WebhookStore:
             url=url,
             events=events or ["*"],
             secret=secrets.token_hex(32),
-            created_at=datetime.utcnow().isoformat(),
+            created_at=datetime.now(timezone.utc).isoformat(),
         )
 
         try:
@@ -218,7 +218,7 @@ class WebhookStore:
                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                     (str(uuid.uuid4()), webhook_id, event_type,
                      payload[:2000], status_code, response_time_ms,
-                     error, datetime.utcnow().isoformat()),
+                     error, datetime.now(timezone.utc).isoformat()),
                 )
 
                 # Update counters

@@ -9,7 +9,7 @@ import json
 import sqlite3
 import logging
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from shopsage.config import DB_PATH
@@ -142,7 +142,7 @@ class ProfileStore:
     def upsert_profile(self, profile: UserProfile) -> None:
         """Insert or update a user profile."""
         conn = self._get_conn()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         conn.execute(
             """

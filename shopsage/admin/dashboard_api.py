@@ -15,7 +15,7 @@ from shopsage.analytics.search_tracker import SearchTracker
 from shopsage.notifications.notification_center import NotificationCenter
 from shopsage.security.audit_log import AuditLog
 from shopsage.monitoring.health import HealthChecker
-from shopsage.cache.ttl_cache import price_cache, review_cache, embedding_cache
+from shopsage.cache.distributed_cache import price_cache, review_cache, embedding_cache
 from shopsage.events.event_bus import get_event_bus
 from shopsage.workers.job_queue import JobQueue
 from shopsage.config import DB_PATH
@@ -94,9 +94,9 @@ class AdminDashboard:
         """Cache performance metrics."""
         try:
             return {
-                "price_cache": price_cache.get_stats(),
-                "review_cache": review_cache.get_stats(),
-                "embedding_cache": embedding_cache.get_stats(),
+                "price_cache": price_cache.stats,
+                "review_cache": review_cache.stats,
+                "embedding_cache": embedding_cache.stats,
             }
         except Exception as e:
             logger.error(f"[Dashboard] Cache stats error: {e}")

@@ -15,7 +15,7 @@ Schema:
 import sqlite3
 import uuid
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional
 
 from shopsage.config import DB_PATH
@@ -104,7 +104,7 @@ class NotificationCenter:
             "priority": priority,
             "is_read": False,
             "action_url": action_url,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
         try:
@@ -211,7 +211,7 @@ class NotificationCenter:
 
     def purge_old(self, days: int = 30) -> int:
         """Delete notifications older than N days."""
-        cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
         try:
             with self._conn() as conn:
                 cursor = conn.execute(

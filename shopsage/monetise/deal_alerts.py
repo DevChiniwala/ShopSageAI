@@ -9,7 +9,7 @@ import json
 import sqlite3
 import logging
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from shopsage.config import DB_PATH
@@ -129,7 +129,7 @@ class DealAlertStore:
         Returns True if the price dropped below the target (alert triggered).
         """
         conn = self._get_conn()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         # Get current watch
         row = conn.execute(

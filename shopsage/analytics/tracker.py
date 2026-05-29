@@ -2,7 +2,7 @@ import sqlite3
 import uuid
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List
 
 from shopsage.config import DB_PATH
@@ -54,7 +54,7 @@ class AnalyticsStore:
             event_data (Dict[str, Any]): Additional event data as a dictionary.
         """
         event_id = str(uuid.uuid4())
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
         
         try:
             event_data_json = json.dumps(event_data)

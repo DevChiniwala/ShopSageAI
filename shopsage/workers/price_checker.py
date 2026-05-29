@@ -8,7 +8,7 @@ Runs as an asyncio background task alongside the FastAPI server.
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from shopsage.monetise.deal_alerts import DealAlertStore, PriceWatch
@@ -95,7 +95,7 @@ class PriceCheckerWorker:
             try:
                 await self._check_cycle()
                 self._stats["cycles_completed"] += 1
-                self._stats["last_run"] = datetime.utcnow().isoformat()
+                self._stats["last_run"] = datetime.now(timezone.utc).isoformat()
             except asyncio.CancelledError:
                 break
             except Exception as e:

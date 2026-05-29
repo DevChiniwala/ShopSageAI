@@ -14,7 +14,7 @@ import uuid
 import secrets
 import hashlib
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List, Optional
 
 from shopsage.config import DB_PATH
@@ -109,11 +109,11 @@ class APIKeyManager:
         raw_key = f"sk-{secrets.token_urlsafe(40)}"
         key_hash = _hash_key(raw_key)
         prefix = _key_prefix(raw_key)
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         expires_at = None
         if expires_in_days:
-            expires_at = (datetime.utcnow() + timedelta(days=expires_in_days)).isoformat()
+            expires_at = (datetime.now(timezone.utc) + timedelta(days=expires_in_days)).isoformat()
 
         key_id = str(uuid.uuid4())
 
@@ -174,7 +174,7 @@ class APIKeyManager:
         """
         # Set old key expiration
         expires_at = (
-            datetime.utcnow() + timedelta(hours=grace_period_hours)
+            datetime.now(timezone.utc) + timedelta(hours=grace_period_hours)
         ).isoformat()
 
         try:
@@ -210,7 +210,7 @@ class APIKeyManager:
         - Updates last_used_at and usage_count
         """
         key_hash = _hash_key(raw_key)
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         try:
             with self._conn() as conn:

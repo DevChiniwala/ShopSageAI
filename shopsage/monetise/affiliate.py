@@ -125,13 +125,13 @@ def log_click(store: str, product_url: str, session_id: str = "") -> None:
         product_url: The affiliate-tagged URL clicked.
         session_id: User session ID for attribution.
     """
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     _click_log.append({
         "store": store,
         "url": product_url[:200],
         "session_id": session_id[:16] if session_id else "",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     })
     logger.info(f"[Affiliate] Click logged: {store} ({len(_click_log)} total)")
 

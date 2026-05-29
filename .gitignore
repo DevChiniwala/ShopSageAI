@@ -2,8 +2,10 @@ __pycache__/
 *.pyc
 .env
 data/products.db
+data/shopsage.sqlite3
 data/faiss_index/
 venv/
 *.egg-info/
 .vscode/
 do_commits.bat
+day11_16_commits.bat

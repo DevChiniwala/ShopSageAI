@@ -11,7 +11,7 @@ Schema:
 import sqlite3
 import uuid
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional
 
 from shopsage.config import DB_PATH
@@ -86,7 +86,7 @@ class SearchTracker:
                        VALUES (?, ?, ?, ?, ?, ?, ?)""",
                     (str(uuid.uuid4()), session_id, query,
                      self._normalize(query), route, result_count,
-                     datetime.utcnow().isoformat()),
+                     datetime.now(timezone.utc).isoformat()),
                 )
                 conn.commit()
         except sqlite3.Error as e:
@@ -102,7 +102,7 @@ class SearchTracker:
 
         Returns list of {query, count, avg_results}.
         """
-        cutoff = (datetime.utcnow() - timedelta(hours=hours)).isoformat()
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
         try:
             with self._conn() as conn:
                 rows = conn.execute(
@@ -129,7 +129,7 @@ class SearchTracker:
 
         These represent products users want but aren't in inventory.
         """
-        cutoff = (datetime.utcnow() - timedelta(hours=hours)).isoformat()
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
         try:
             with self._conn() as conn:
                 rows = conn.execute(
@@ -151,7 +151,7 @@ class SearchTracker:
         """
         Get search volume statistics for the last N hours.
         """
-        cutoff = (datetime.utcnow() - timedelta(hours=hours)).isoformat()
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
         try:
             with self._conn() as conn:
                 row = conn.execute(
@@ -181,7 +181,7 @@ class SearchTracker:
 
         Useful for traffic pattern visualization.
         """
-        cutoff = (datetime.utcnow() - timedelta(hours=hours)).isoformat()
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
         try:
             with self._conn() as conn:
                 rows = conn.execute(

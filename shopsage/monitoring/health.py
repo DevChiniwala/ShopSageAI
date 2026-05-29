@@ -115,7 +115,7 @@ class HealthChecker:
         """Check cache subsystem health and stats."""
         start = time.monotonic()
         try:
-            from shopsage.cache.ttl_cache import price_cache, review_cache, embedding_cache
+            from shopsage.cache.distributed_cache import price_cache, review_cache, embedding_cache
 
             caches = {
                 "prices": price_cache.stats,

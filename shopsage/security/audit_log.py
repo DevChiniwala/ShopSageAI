@@ -14,7 +14,7 @@ import sqlite3
 import uuid
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 
@@ -118,7 +118,7 @@ class AuditLog:
         """
         entry = AuditEntry(
             id=str(uuid.uuid4()),
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             actor_id=actor_id,
             actor_type=actor_type,
             action=action,
@@ -236,7 +236,7 @@ class AuditLog:
     def count_actions(self, hours: int = 24) -> Dict[str, int]:
         """Count actions by type in the last N hours."""
         from datetime import timedelta
-        cutoff = (datetime.utcnow() - timedelta(hours=hours)).isoformat()
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
         try:
             with self._conn() as conn:
                 rows = conn.execute(

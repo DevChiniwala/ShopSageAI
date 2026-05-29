@@ -18,7 +18,7 @@ import io
 import os
 import uuid
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List, Optional
 
 from shopsage.billing.usage_tracker import UsageTracker
@@ -158,7 +158,7 @@ class ExportPipeline:
     ) -> Dict[str, Any]:
         """Write export data to file and track it."""
         export_id = str(uuid.uuid4())[:12]
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = f"{export_type}_{tenant_id[:8]}_{timestamp}.{fmt}"
         filepath = os.path.join(EXPORT_DIR, filename)
 
@@ -179,7 +179,7 @@ class ExportPipeline:
                 "filepath": filepath,
                 "row_count": len(data),
                 "file_size_bytes": file_size,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
             }
             self._exports[export_id] = metadata
 
