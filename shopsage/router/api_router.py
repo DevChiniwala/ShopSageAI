@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from shopsage.auth.api_key import verify_api_key
-from shopsage.auth.rate_limiter import enforce_rate_limit, get_rate_limiter, RateLimiter
+from shopsage.auth.redis_rate_limiter import enforce_rate_limit, get_rate_limiter, RedisRateLimiter as RateLimiter
 from shopsage.auth.tenant_store import TenantStore
 from shopsage.analytics.tracker import AnalyticsStore
 from shopsage.billing.usage_tracker import UsageTracker

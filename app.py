@@ -28,7 +28,7 @@ from shopsage.memory.feedback_store import FeedbackStore
 from shopsage.history.conversation_store import ConversationStore
 from shopsage.history.exporter import export_to_json, export_to_csv, export_to_markdown
 from shopsage.monitoring.health import HealthChecker
-from shopsage.cache.ttl_cache import price_cache, review_cache, embedding_cache
+from shopsage.cache.distributed_cache import price_cache, review_cache, embedding_cache
 from shopsage.webhooks.webhook_store import WebhookStore
 from shopsage.webhooks.dispatcher import WebhookDispatcher
 from shopsage.analytics.search_tracker import SearchTracker
