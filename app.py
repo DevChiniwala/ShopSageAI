@@ -51,16 +51,28 @@ from shopsage.retention.policy_manager import RetentionPolicyManager
 from shopsage.onboarding.manager import OnboardingManager
 from shopsage.config import DB_PATH
 
+# ─── Observability ─────────────────────────────────────────────────────
+from shopsage.monitoring.logging_config import configure_logging, get_logger
+from shopsage.monitoring.tracing import configure_tracing
+from shopsage.monitoring.sentry_integration import configure_sentry
+from shopsage.monitoring.metrics import (
+    metrics_app, PrometheusMiddleware, init_app_info,
+)
+
 # ─── Logging ───────────────────────────────────────────────────────────
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("shopsage")
+configure_logging()
+logger = get_logger("shopsage")
 
 # ─── FastAPI App ───────────────────────────────────────────────────────
 app = FastAPI(
     title="ShopSage AI",
     description="AI-powered intelligent shopping assistant with user memory",
-    version="2.0.0",
+    version="2.1.0",
 )
+
+# ─── Observability Middleware ──────────────────────────────────────────
+app.add_middleware(PrometheusMiddleware)
+app.mount("/metrics", metrics_app)
 
 # Add Security Middlewares
 app.add_middleware(RateLimitHeadersMiddleware)
@@ -139,6 +151,11 @@ app.include_router(api_router)
 @app.on_event("startup")
 async def startup_event():
     """Start background workers, scheduler, and event bus on app startup."""
+    # Initialize observability stack
+    init_app_info()
+    configure_tracing(app)
+    configure_sentry()
+
     _price_checker.start()
     # Celery migration: JobQueue and TaskScheduler are now managed externally via Celery workers
     # _job_queue.start_worker(poll_interval=3.0)
@@ -146,7 +163,7 @@ async def startup_event():
     # _scheduler.start(check_interval=30.0)
     register_builtin_plugins(_plugin_manager)
     register_all_handlers()
-    logger.info("[App] Background workers, job queue, scheduler, and event bus started")
+    logger.info("app_started", event="startup", version="2.1.0")
 
 
 @app.on_event("shutdown")
