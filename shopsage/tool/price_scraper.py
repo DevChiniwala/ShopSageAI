@@ -17,7 +17,7 @@ import httpx
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 
-from shopsage.config import SCRAPER_TIMEOUT, SCRAPER_CACHE_TTL, MAX_RESULTS_PER_STORE
+from shopsage.config import settings
 from shopsage.monetise.affiliate import inject_affiliate_link
 
 logger = logging.getLogger("shopsage.scraper")
@@ -67,7 +67,7 @@ def _get_cached(query: str) -> Optional[list[StoreResult]]:
 
 def _set_cache(query: str, results: list[StoreResult]) -> None:
     """Store results in TTL cache."""
-    _price_cache.set(_normalize_query(query), results, ttl=SCRAPER_CACHE_TTL)
+    _price_cache.set(_normalize_query(query), results, ttl=settings.SCRAPER_CACHE_TTL)
 
 
 # ─── HTTP Helpers ──────────────────────────────────────────────────────
@@ -110,7 +110,7 @@ async def _scrape_amazon(client: httpx.AsyncClient, query: str) -> list[StoreRes
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "lxml")
 
-        items = soup.select('[data-component-type="s-search-result"]')[:MAX_RESULTS_PER_STORE]
+        items = soup.select('[data-component-type="s-search-result"]')[:settings.MAX_RESULTS_PER_STORE]
 
         for item in items:
             try:
@@ -187,9 +187,9 @@ async def _scrape_flipkart(client: httpx.AsyncClient, query: str) -> list[StoreR
         soup = BeautifulSoup(resp.text, "lxml")
 
         # Flipkart uses various container classes; try common ones
-        items = soup.select('[data-id]')[:MAX_RESULTS_PER_STORE * 2]
+        items = soup.select('[data-id]')[:settings.MAX_RESULTS_PER_STORE * 2]
 
-        for item in items[:MAX_RESULTS_PER_STORE]:
+        for item in items[:settings.MAX_RESULTS_PER_STORE]:
             try:
                 # Product name — try multiple selectors
                 title_el = (
@@ -265,7 +265,7 @@ async def _scrape_croma(client: httpx.AsyncClient, query: str) -> list[StoreResu
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "lxml")
 
-        items = soup.select(".product-item, [class*='product-card']")[:MAX_RESULTS_PER_STORE]
+        items = soup.select(".product-item, [class*='product-card']")[:settings.MAX_RESULTS_PER_STORE]
 
         for item in items:
             try:
@@ -331,7 +331,7 @@ async def fetch_prices(query: str) -> list[StoreResult]:
 
     logger.info(f"[Scraper] Fetching prices for: '{query[:40]}'")
 
-    async with httpx.AsyncClient(timeout=SCRAPER_TIMEOUT, verify=False) as client:
+    async with httpx.AsyncClient(timeout=settings.SCRAPER_TIMEOUT, verify=False) as client:
         tasks = [
             _scrape_amazon(client, query),
             _scrape_flipkart(client, query),

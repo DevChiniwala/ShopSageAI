@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.security.audit")
 
@@ -46,7 +46,7 @@ class AuditLog:
     or delete operation by design.
     """
 
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self.db_path = db_path
         self._init_db()
 

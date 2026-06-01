@@ -14,13 +14,13 @@ from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 from google import genai
 
-from shopsage.config import GOOGLE_API_KEY, SCRAPER_TIMEOUT
+from shopsage.config import settings
 from langchain_core.tools import tool
 
 logger = logging.getLogger("shopsage.tools.reviews")
 
 _ua = UserAgent(fallback="Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-_client = genai.Client(api_key=GOOGLE_API_KEY)
+_client = genai.Client(api_key=settings.GOOGLE_API_KEY)
 
 
 # ─── Review Extraction ─────────────────────────────────────────────────
@@ -68,7 +68,7 @@ def _extract_reviews_flipkart(html: str) -> list[str]:
 async def _fetch_reviews(url: str) -> list[str]:
     """Fetch and extract reviews from a product URL."""
     try:
-        async with httpx.AsyncClient(timeout=SCRAPER_TIMEOUT, verify=False) as client:
+        async with httpx.AsyncClient(timeout=settings.SCRAPER_TIMEOUT, verify=False) as client:
             resp = await client.get(url, headers=_headers(), follow_redirects=True)
             resp.raise_for_status()
             html = resp.text

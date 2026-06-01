@@ -3,20 +3,20 @@ import os
 from langchain_core.tools import tool
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from shopsage.config import FAISS_INDEX_PATH, EMBEDDING_MODEL, TOP_K_RESULTS, GOOGLE_API_KEY
+from shopsage.config import settings
 
 
 def _load_faiss_index():
     """Load the FAISS index from disk."""
-    if not os.path.exists(FAISS_INDEX_PATH):
+    if not os.path.exists(settings.FAISS_INDEX_PATH):
         return None
 
     embeddings = GoogleGenerativeAIEmbeddings(
-        model=EMBEDDING_MODEL,
-        google_api_key=GOOGLE_API_KEY
+        model=settings.EMBEDDING_MODEL,
+        google_api_key=settings.GOOGLE_API_KEY
     )
     return FAISS.load_local(
-        FAISS_INDEX_PATH,
+        settings.FAISS_INDEX_PATH,
         embeddings,
         allow_dangerous_deserialization=True
     )
@@ -56,7 +56,7 @@ def policy_search(query: str) -> str:
             "'python scripts/init_db.py' to initialize it."
         )
 
-    results = vector_store.similarity_search(query, k=TOP_K_RESULTS)
+    results = vector_store.similarity_search(query, k=settings.TOP_K_RESULTS)
 
     if not results:
         return "No relevant policy information found for your query."

@@ -9,7 +9,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_classic.chains import ConversationChain
 from langchain_classic.memory import ConversationBufferMemory
 from langchain_core.prompts import PromptTemplate
-from shopsage.config import LLM_MODEL, GOOGLE_API_KEY
+from shopsage.config import settings
 
 CHITCHAT_PROMPT = PromptTemplate(
     input_variables=["history", "input"],
@@ -64,8 +64,8 @@ def get_chitchat_response(user_input: str, session_id: str) -> str:
     """
     try:
         llm = ChatGoogleGenerativeAI(
-            model=LLM_MODEL,
-            google_api_key=GOOGLE_API_KEY,
+            model=settings.LLM_MODEL,
+            google_api_key=settings.GOOGLE_API_KEY,
             temperature=0.7,
         )
 

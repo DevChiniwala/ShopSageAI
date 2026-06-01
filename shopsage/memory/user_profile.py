@@ -12,7 +12,7 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Optional
 
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.memory")
 
@@ -76,7 +76,7 @@ class UserProfile:
 class ProfileStore:
     """SQLite-backed persistent store for user profiles."""
 
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self.db_path = db_path
         self._ensure_table()
 

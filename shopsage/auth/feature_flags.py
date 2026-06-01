@@ -22,7 +22,7 @@ import threading
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Set
 
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.config.feature_flags")
 
@@ -54,7 +54,7 @@ class FeatureFlagStore:
     - In-memory cache for performance
     """
 
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self.db_path = db_path
         self._cache: Dict[str, Dict[str, bool]] = {}  # tenant_id -> {flag: enabled}
         self._global_cache: Dict[str, bool] = {}

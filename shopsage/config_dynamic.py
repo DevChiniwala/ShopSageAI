@@ -21,7 +21,7 @@ import threading
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.config.dynamic")
 
@@ -67,7 +67,7 @@ class DynamicConfig:
     - Audit trail (who changed what, when)
     """
 
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self.db_path = db_path
         self._cache: Dict[str, Any] = {}
         self._tenant_cache: Dict[str, Dict[str, Any]] = {}

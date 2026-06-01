@@ -12,7 +12,7 @@ from typing import Dict, Any
 
 from shopsage.billing.usage_tracker import UsageTracker
 from shopsage.auth.tenant_store import TenantStore
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.billing.engine")
 
@@ -47,7 +47,7 @@ class BillingEngine:
     Calculates tenant bills based on usage and tier pricing.
     """
 
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self.usage_tracker = UsageTracker(db_path)
         self.tenant_store = TenantStore(db_path)
 

@@ -17,7 +17,7 @@ from shopsage.tool.price_comparison import compare_prices
 from shopsage.tool.review_analyzer import analyze_reviews
 from shopsage.tool.deal_alert_tool import set_price_alert, list_price_alerts, remove_price_alert
 from shopsage.tool.recommend_tool import get_recommendations, trending_products
-from shopsage.config import LLM_MODEL, GOOGLE_API_KEY, ENABLE_USER_MEMORY
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.agent")
 
@@ -118,8 +118,8 @@ def _get_agent():
 
     if _agent is None:
         _llm = ChatGoogleGenerativeAI(
-            model=LLM_MODEL,
-            google_api_key=GOOGLE_API_KEY,
+            model=settings.LLM_MODEL,
+            google_api_key=settings.GOOGLE_API_KEY,
             temperature=0.3,
         )
 
@@ -136,7 +136,7 @@ def _build_system_prompt(session_id: str) -> str:
     """Build the full system prompt with user profile context injected."""
     prompt = SHOPPING_SYSTEM_PROMPT
 
-    if ENABLE_USER_MEMORY:
+    if settings.ENABLE_USER_MEMORY:
         profile_context = get_profile_context(session_id)
         prompt += MEMORY_CONTEXT_TEMPLATE.format(profile_context=profile_context)
 

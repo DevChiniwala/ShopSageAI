@@ -7,10 +7,10 @@ user queries and pre-defined route utterances, routing to either
 """
 import numpy as np
 from google import genai
-from shopsage.config import GOOGLE_API_KEY
+from shopsage.config import settings
 
 # Initialize the Google GenAI client
-_client = genai.Client(api_key=GOOGLE_API_KEY)
+_client = genai.Client(api_key=settings.GOOGLE_API_KEY)
 
 # ─── Route Definitions ─────────────────────────────────────────────────
 

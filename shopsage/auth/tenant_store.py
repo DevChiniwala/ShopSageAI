@@ -5,14 +5,14 @@ import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.auth.tenant_store")
 
 class TenantStore:
     """Manages SaaS tenants and API keys using SQLite."""
 
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self.db_path = db_path
         self._init_db()
 

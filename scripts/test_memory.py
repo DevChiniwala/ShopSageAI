@@ -13,7 +13,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from shopsage.memory.user_profile import UserProfile, ProfileStore
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 
 def test_memory():
@@ -23,7 +23,7 @@ def test_memory():
     print("=" * 50)
     print()
 
-    store = ProfileStore(db_path=DB_PATH)
+    store = ProfileStore(db_path=settings.DB_PATH)
 
     # Test 1: Create a new profile
     print("[Test 1] Creating new profile...")

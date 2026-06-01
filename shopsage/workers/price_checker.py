@@ -13,7 +13,7 @@ from typing import Optional
 
 from shopsage.monetise.deal_alerts import DealAlertStore, PriceWatch
 from shopsage.tool.price_scraper import fetch_prices
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.workers.price_checker")
 
@@ -38,7 +38,7 @@ class PriceCheckerWorker:
     the notification system for alert delivery.
     """
 
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self._store = DealAlertStore(db_path=db_path)
         self._running = False
         self._task: Optional[asyncio.Task] = None

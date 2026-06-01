@@ -19,7 +19,7 @@ from typing import Any, Dict, Optional
 import httpx
 
 from shopsage.webhooks.webhook_store import WebhookStore, Webhook
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.webhooks.dispatcher")
 
@@ -38,7 +38,7 @@ class WebhookDispatcher:
     - Fire-and-forget background delivery via asyncio.create_task
     """
 
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self._store = WebhookStore(db_path=db_path)
 
     def _sign_payload(self, payload: str, secret: str) -> str:

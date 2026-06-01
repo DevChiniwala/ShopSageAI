@@ -25,20 +25,20 @@ from shopsage.security.input_sanitizer import InputSanitizer
 from shopsage.auth.feature_flags import FeatureFlagStore
 from shopsage.auth.key_manager import APIKeyManager
 from shopsage.agent.shopping_agent import get_shopping_response
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.router.api_router")
 
 router = APIRouter(prefix="/api/v1", tags=["SaaS API"])
 
-_tenants = TenantStore(db_path=DB_PATH)
-_analytics = AnalyticsStore(db_path=DB_PATH)
-_usage_tracker = UsageTracker(db_path=DB_PATH)
-_billing_engine = BillingEngine(db_path=DB_PATH)
-_audit = AuditLog(db_path=DB_PATH)
+_tenants = TenantStore(db_path=settings.DB_PATH)
+_analytics = AnalyticsStore(db_path=settings.DB_PATH)
+_usage_tracker = UsageTracker(db_path=settings.DB_PATH)
+_billing_engine = BillingEngine(db_path=settings.DB_PATH)
+_audit = AuditLog(db_path=settings.DB_PATH)
 _sanitizer = InputSanitizer()
-_flags = FeatureFlagStore(db_path=DB_PATH)
-_key_manager = APIKeyManager(db_path=DB_PATH)
+_flags = FeatureFlagStore(db_path=settings.DB_PATH)
+_key_manager = APIKeyManager(db_path=settings.DB_PATH)
 
 
 # ─── Request / Response Models ─────────────────────────────────────────

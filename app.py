@@ -49,7 +49,7 @@ from shopsage.router.versioning import (
 from shopsage.analytics.rate_limit_analytics import RateLimitAnalytics
 from shopsage.retention.policy_manager import RetentionPolicyManager
 from shopsage.onboarding.manager import OnboardingManager
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 # ─── Observability ─────────────────────────────────────────────────────
 from shopsage.monitoring.logging_config import configure_logging, get_logger
@@ -74,9 +74,23 @@ app = FastAPI(
 app.add_middleware(PrometheusMiddleware)
 app.mount("/metrics", metrics_app)
 
-# Add Security Middlewares
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from shopsage.security.abusive_ip_blocker import AbusiveIPBlockerMiddleware
+from shopsage.cache.distributed_cache import _get_shared_client
+
+# Security Middlewares
 app.add_middleware(RateLimitHeadersMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(
+    TrustedHostMiddleware, allowed_hosts=["*", "localhost", "127.0.0.1"]
+)
+app.add_middleware(
+    AbusiveIPBlockerMiddleware,
+    redis_client=_get_shared_client(),
+    threshold=50,
+    window_seconds=3600,
+    block_duration_seconds=86400,
+)
 
 # API Versioning
 _version_registry = create_default_registry()
@@ -85,7 +99,7 @@ app.add_middleware(VersioningMiddleware, registry=_version_registry)
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -96,35 +110,35 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # User profile store
-_profile_store = ProfileStore(db_path=DB_PATH)
+_profile_store = ProfileStore(db_path=settings.DB_PATH)
 
 # Background price checker
-_price_checker = PriceCheckerWorker(db_path=DB_PATH)
+_price_checker = PriceCheckerWorker(db_path=settings.DB_PATH)
 
 # Feedback store
-_feedback_store = FeedbackStore(db_path=DB_PATH)
+_feedback_store = FeedbackStore(db_path=settings.DB_PATH)
 
 # Conversation history
-_conversation_store = ConversationStore(db_path=DB_PATH)
+_conversation_store = ConversationStore(db_path=settings.DB_PATH)
 
 # Webhook system
-_webhook_store = WebhookStore(db_path=DB_PATH)
-_webhook_dispatcher = WebhookDispatcher(db_path=DB_PATH)
+_webhook_store = WebhookStore(db_path=settings.DB_PATH)
+_webhook_dispatcher = WebhookDispatcher(db_path=settings.DB_PATH)
 
 # Search analytics
-_search_tracker = SearchTracker(db_path=DB_PATH)
+_search_tracker = SearchTracker(db_path=settings.DB_PATH)
 
 # Notification center
-_notification_center = NotificationCenter(db_path=DB_PATH)
+_notification_center = NotificationCenter(db_path=settings.DB_PATH)
 
 # Job queue
-_job_queue = JobQueue(db_path=DB_PATH)
+_job_queue = JobQueue(db_path=settings.DB_PATH)
 
 # Admin dashboard
-_admin_dashboard = AdminDashboard(db_path=DB_PATH)
+_admin_dashboard = AdminDashboard(db_path=settings.DB_PATH)
 
 # Export pipeline
-_export_pipeline = ExportPipeline(db_path=DB_PATH)
+_export_pipeline = ExportPipeline(db_path=settings.DB_PATH)
 
 # Task scheduler
 _scheduler = TaskScheduler(job_queue=_job_queue)
@@ -133,16 +147,16 @@ _scheduler = TaskScheduler(job_queue=_job_queue)
 _plugin_manager = PluginManager()
 
 # Dynamic config
-_dynamic_config = DynamicConfig(db_path=DB_PATH)
+_dynamic_config = DynamicConfig(db_path=settings.DB_PATH)
 
 # Rate limit analytics
-_rl_analytics = RateLimitAnalytics(db_path=DB_PATH)
+_rl_analytics = RateLimitAnalytics(db_path=settings.DB_PATH)
 
 # Data retention policy manager
-_retention_mgr = RetentionPolicyManager(db_path=DB_PATH)
+_retention_mgr = RetentionPolicyManager(db_path=settings.DB_PATH)
 
 # Tenant onboarding manager
-_onboarding_mgr = OnboardingManager(db_path=DB_PATH)
+_onboarding_mgr = OnboardingManager(db_path=settings.DB_PATH)
 
 # Include SaaS API Router
 app.include_router(api_router)
@@ -185,7 +199,7 @@ async def worker_status():
     }
 
 
-_health_checker = HealthChecker(db_path=DB_PATH)
+_health_checker = HealthChecker(db_path=settings.DB_PATH)
 
 
 @app.get("/health")
@@ -403,7 +417,7 @@ async def get_user_profile(session_id: str):
 
 # ─── Deal Alert Endpoints ──────────────────────────────────────────────
 
-_deal_store = DealAlertStore(db_path=DB_PATH)
+_deal_store = DealAlertStore(db_path=settings.DB_PATH)
 
 
 class AlertRequest(BaseModel):

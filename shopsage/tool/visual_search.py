@@ -9,12 +9,12 @@ and search the inventory for matching products.
 import base64
 import logging
 from google import genai
-from shopsage.config import GOOGLE_API_KEY
+from shopsage.config import settings
 from shopsage.utils.data_loader import ProductDataLoader
 
 logger = logging.getLogger("shopsage.tools.visual")
 
-_client = genai.Client(api_key=GOOGLE_API_KEY)
+_client = genai.Client(api_key=settings.GOOGLE_API_KEY)
 _loader = ProductDataLoader()
 
 # ─── Vision Prompt ─────────────────────────────────────────────────────

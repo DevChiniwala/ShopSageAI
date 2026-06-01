@@ -10,11 +10,11 @@ import json
 import logging
 from langchain_core.tools import tool
 from shopsage.memory.user_profile import ProfileStore
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.tools")
 
-_store = ProfileStore(db_path=DB_PATH)
+_store = ProfileStore(db_path=settings.DB_PATH)
 
 
 @tool

@@ -18,7 +18,7 @@ from shopsage.monitoring.health import HealthChecker
 from shopsage.cache.distributed_cache import price_cache, review_cache, embedding_cache
 from shopsage.events.event_bus import get_event_bus
 from shopsage.workers.job_queue import JobQueue
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.admin.dashboard")
 
@@ -30,7 +30,7 @@ class AdminDashboard:
     Designed to power the admin dashboard UI with real-time stats.
     """
 
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self._tenants = TenantStore(db_path)
         self._usage = UsageTracker(db_path)
         self._search = SearchTracker(db_path)

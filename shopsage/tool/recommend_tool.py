@@ -10,11 +10,11 @@ import logging
 from langchain_core.tools import tool
 from shopsage.tool.preference_tool import get_profile_context
 from shopsage.memory.user_profile import ProfileStore
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.tools.recommend")
 
-_profile_store = ProfileStore(db_path=DB_PATH)
+_profile_store = ProfileStore(db_path=settings.DB_PATH)
 
 
 @tool

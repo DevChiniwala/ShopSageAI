@@ -23,7 +23,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional
 from collections import defaultdict
 
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.workers.job_queue")
 
@@ -40,7 +40,7 @@ class JobQueue:
     - Status tracking and history
     """
 
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self.db_path = db_path
         self._handlers: Dict[str, Callable] = {}
         self._lock = threading.Lock()

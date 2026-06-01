@@ -8,7 +8,7 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import declarative_base
 
-from shopsage.config import DATABASE_URL
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.db")
 
@@ -18,7 +18,7 @@ Base = declarative_base()
 # Async Engine setup
 # For SQLite, we don't need pool_size or max_overflow. 
 # For PostgreSQL, we will use connection pooling.
-is_sqlite = DATABASE_URL.startswith("sqlite")
+is_sqlite = settings.DATABASE_URL.startswith("sqlite")
 
 engine_kwargs = {}
 if not is_sqlite:
@@ -29,7 +29,7 @@ if not is_sqlite:
     })
 
 engine = create_async_engine(
-    DATABASE_URL,
+    settings.DATABASE_URL,
     echo=False,
     **engine_kwargs
 )

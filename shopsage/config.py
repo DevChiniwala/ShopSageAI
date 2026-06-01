@@ -1,44 +1,74 @@
-"""Central configuration for ShopSage AI."""
+"""
+Central Configuration for ShopSage AI.
+
+Migrated to pydantic-settings for strong validation, default values,
+and type safety. Variables are loaded from the environment or .env file.
+"""
+
 import os
-from dotenv import load_dotenv
+from typing import List
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field
 
-load_dotenv()
 
-# ─── API Keys ──────────────────────────────────────────────────────────
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+class Settings(BaseSettings):
+    """Global configuration settings for ShopSage AI."""
 
-# ─── Model Configuration ──────────────────────────────────────────────
-LLM_MODEL = "gemini-2.0-flash"
-EMBEDDING_MODEL = "models/gemini-embedding-001"
+    # ─── Environment ──────────────────────────────────────────────────────────
+    ENVIRONMENT: str = Field(default="production", description="development, staging, or production")
+    LOG_LEVEL: str = Field(default="INFO")
 
-# ─── Paths & Databases ──────────────────────────────────────────────────
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-DB_PATH = os.path.join(DATA_DIR, "shopsage.sqlite3")
-POLICY_PATH = os.path.join(DATA_DIR, "policy.txt")
-FAISS_INDEX_PATH = os.path.join(DATA_DIR, "faiss_index")
+    # ─── API Keys ─────────────────────────────────────────────────────────────
+    GOOGLE_API_KEY: str = Field(default="")
+    SENTRY_DSN: str = Field(default="")
 
-# SQLAlchemy connection string. Defaults to async SQLite for local dev.
-# For production PostgreSQL, set this to e.g., postgresql+asyncpg://user:pass@host:port/dbname
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    f"sqlite+aiosqlite:///{DB_PATH}"
-)
+    # ─── Model Configuration ──────────────────────────────────────────────────
+    LLM_MODEL: str = Field(default="gemini-2.0-flash")
+    EMBEDDING_MODEL: str = Field(default="models/gemini-embedding-001")
 
-# ─── RAG Configuration ────────────────────────────────────────────────
-CHUNK_SIZE = 500
-CHUNK_OVERLAP = 100
-TOP_K_RESULTS = 3
+    # ─── Paths ────────────────────────────────────────────────────────────────
+    BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    DATA_DIR: str = os.path.join(BASE_DIR, "data")
+    DB_PATH: str = os.path.join(DATA_DIR, "shopsage.sqlite3")
+    POLICY_PATH: str = os.path.join(DATA_DIR, "policy.txt")
+    FAISS_INDEX_PATH: str = os.path.join(DATA_DIR, "faiss_index")
 
-# ─── User Memory Configuration ────────────────────────────────────────
-ENABLE_USER_MEMORY = True
-MAX_PROFILE_NOTES_LENGTH = 2000
+    # ─── Database & Redis ─────────────────────────────────────────────────────
+    DATABASE_URL: str = Field(default="")
+    REDIS_URL: str = Field(default="redis://localhost:6379/0")
 
-# ─── Price Scraper Configuration ──────────────────────────────────────
-SCRAPER_TIMEOUT = int(os.getenv("SCRAPER_TIMEOUT", "8"))
-SCRAPER_CACHE_TTL = int(os.getenv("SCRAPER_CACHE_TTL", "600"))
-MAX_RESULTS_PER_STORE = int(os.getenv("MAX_RESULTS_PER_STORE", "3"))
+    # ─── RAG Configuration ────────────────────────────────────────────────────
+    CHUNK_SIZE: int = Field(default=500)
+    CHUNK_OVERLAP: int = Field(default=100)
+    TOP_K_RESULTS: int = Field(default=3)
 
-# ─── Server Configuration ─────────────────────────────────────────────
-HOST = "0.0.0.0"
-PORT = 8000
+    # ─── User Memory Configuration ────────────────────────────────────────────
+    ENABLE_USER_MEMORY: bool = Field(default=True)
+    MAX_PROFILE_NOTES_LENGTH: int = Field(default=2000)
+
+    # ─── Scraper Configuration ────────────────────────────────────────────────
+    SCRAPER_TIMEOUT: int = Field(default=8)
+    SCRAPER_CACHE_TTL: int = Field(default=600)
+    MAX_RESULTS_PER_STORE: int = Field(default=3)
+
+    # ─── Server & Security Configuration ──────────────────────────────────────
+    HOST: str = Field(default="0.0.0.0")
+    PORT: int = Field(default=8000)
+    CORS_ORIGINS: List[str] = Field(default=["http://localhost:3000", "http://localhost:8000"])
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Ensure data dir exists
+        os.makedirs(self.DATA_DIR, exist_ok=True)
+        
+        # Default fallback for sqlite
+        if not self.DATABASE_URL:
+            # Using absolute path for sqlite is safer
+            db_abs_path = os.path.abspath(self.DB_PATH).replace('\\', '/')
+            self.DATABASE_URL = f"sqlite+aiosqlite:///{db_abs_path}"
+
+
+# Instantiate a single global settings object
+settings = Settings()

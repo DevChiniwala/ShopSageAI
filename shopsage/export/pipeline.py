@@ -25,7 +25,7 @@ from shopsage.billing.usage_tracker import UsageTracker
 from shopsage.analytics.search_tracker import SearchTracker
 from shopsage.security.audit_log import AuditLog
 from shopsage.history.conversation_store import ConversationStore
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.export.pipeline")
 
@@ -42,7 +42,7 @@ class ExportPipeline:
     and tracked with metadata for retrieval.
     """
 
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self._usage = UsageTracker(db_path)
         self._search = SearchTracker(db_path)
         self._audit = AuditLog(db_path)

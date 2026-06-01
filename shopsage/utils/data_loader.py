@@ -1,13 +1,13 @@
 """ProductDataLoader - handles SQLite queries for product search."""
 import sqlite3
 from typing import Optional
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 
 class ProductDataLoader:
     """Loads and queries product data from the SQLite database."""
 
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self.db_path = db_path
 
     def _get_connection(self) -> sqlite3.Connection:

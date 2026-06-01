@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from dataclasses import dataclass, asdict
 from typing import List, Optional, Dict, Any
 
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.history")
 
@@ -43,7 +43,7 @@ class ConversationStore:
     - Session search across history
     """
 
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self.db_path = db_path
         self._init_db()
 

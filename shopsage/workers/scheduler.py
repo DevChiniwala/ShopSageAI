@@ -19,7 +19,7 @@ from typing import Callable, Dict, Any, List, Optional
 from dataclasses import dataclass, field
 
 from shopsage.workers.job_queue import JobQueue
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.workers.scheduler")
 
@@ -46,7 +46,7 @@ class TaskScheduler:
     Each task is enqueued into the JobQueue at its scheduled interval.
     """
 
-    def __init__(self, job_queue: Optional[JobQueue] = None, db_path: str = DB_PATH):
+    def __init__(self, job_queue: Optional[JobQueue] = None, db_path: str = settings.DB_PATH):
         self._queue = job_queue or JobQueue(db_path)
         self._tasks: Dict[str, ScheduledTask] = {}
         self._running = False

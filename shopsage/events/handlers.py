@@ -14,12 +14,12 @@ import logging
 from shopsage.events.event_bus import Event, get_event_bus
 from shopsage.notifications.notification_center import NotificationCenter
 from shopsage.security.audit_log import AuditLog
-from shopsage.config import DB_PATH
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.events.handlers")
 
-_notif_center = NotificationCenter(db_path=DB_PATH)
-_audit_log = AuditLog(db_path=DB_PATH)
+_notif_center = NotificationCenter(db_path=settings.DB_PATH)
+_audit_log = AuditLog(db_path=settings.DB_PATH)
 
 
 # ─── Price Alert Handler ──────────────────────────────────────────────
