@@ -73,6 +73,38 @@ class HealthChecker:
             "checks": checks,
         }
 
+    def check_liveness(self) -> Dict[str, Any]:
+        """
+        Lightweight check for Kubernetes Liveness probe.
+        Only checks if the process is up and not deadlocked.
+        """
+        sys_check = self._check_system()
+        return {
+            "status": sys_check["status"],
+            "uptime_seconds": round(time.monotonic() - _START_TIME, 1),
+            "check": sys_check,
+        }
+
+    def check_readiness(self) -> Dict[str, Any]:
+        """
+        Deep check for Kubernetes Readiness probe.
+        Verifies database and cache backends are fully reachable.
+        """
+        checks = [self._check_database(), self._check_cache()]
+        statuses = [c["status"] for c in checks]
+        
+        if any(s == "unhealthy" for s in statuses):
+            overall = "unhealthy"
+        elif any(s == "degraded" for s in statuses):
+            overall = "degraded"
+        else:
+            overall = "healthy"
+
+        return {
+            "status": overall,
+            "checks": checks,
+        }
+
     def _check_database(self) -> Dict[str, Any]:
         """Verify SQLite database is readable and writable."""
         start = time.monotonic()

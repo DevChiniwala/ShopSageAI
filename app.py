@@ -210,6 +210,22 @@ async def health_check():
     return JSONResponse(content=result, status_code=status_code)
 
 
+@app.get("/health/liveness")
+async def liveness_probe():
+    """Kubernetes liveness probe. Fast check to ensure app is running."""
+    result = _health_checker.check_liveness()
+    status_code = 200 if result["status"] != "unhealthy" else 503
+    return JSONResponse(content=result, status_code=status_code)
+
+
+@app.get("/health/readiness")
+async def readiness_probe():
+    """Kubernetes readiness probe. Deep check to ensure backends are ready."""
+    result = _health_checker.check_readiness()
+    status_code = 200 if result["status"] != "unhealthy" else 503
+    return JSONResponse(content=result, status_code=status_code)
+
+
 @app.get("/cache/stats")
 async def cache_stats():
     """Return hit/miss stats for all cache layers."""
