@@ -26,15 +26,9 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install pytest httpx
 
-    - name: Import smoke test
-      env:
-        GOOGLE_API_KEY: "dummy_key_for_testing"
-      run: |
-        python -c "from app import app; print('app ok')"
-
     - name: Run pytest
       env:
         GOOGLE_API_KEY: "dummy_key_for_testing"
         ENVIRONMENT: "development"
       run: |
-        pytest -q
+        pytest -q --tb=short

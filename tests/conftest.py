@@ -37,10 +37,45 @@ def _install_google_genai_mock() -> None:
 
 def _install_langchain_mocks() -> None:
     """Stub LangChain / LangGraph so agent and API router imports succeed in CI."""
-    if "langchain_google_genai" not in sys.modules:
-        lc_mod = ModuleType("langchain_google_genai")
-        lc_mod.ChatGoogleGenerativeAI = MagicMock
-        sys.modules["langchain_google_genai"] = lc_mod
+    lc_existing = sys.modules.get("langchain_google_genai")
+    if lc_existing is None or not hasattr(lc_existing, "GoogleGenerativeAIEmbeddings"):
+        try:
+            import importlib
+
+            lc_mod = importlib.import_module("langchain_google_genai")
+            if not hasattr(lc_mod, "GoogleGenerativeAIEmbeddings"):
+                raise ImportError("incomplete langchain_google_genai")
+        except ImportError:
+            lc_mod = ModuleType("langchain_google_genai")
+            lc_mod.ChatGoogleGenerativeAI = MagicMock
+            lc_mod.GoogleGenerativeAIEmbeddings = MagicMock
+            sys.modules["langchain_google_genai"] = lc_mod
+
+    if "langchain_core.prompts" not in sys.modules:
+        prompts = ModuleType("langchain_core.prompts")
+        prompts.PromptTemplate = MagicMock
+        sys.modules["langchain_core.prompts"] = prompts
+
+    if "langchain_core.tools" not in sys.modules:
+        tools = ModuleType("langchain_core.tools")
+        tools.tool = lambda fn: fn
+        sys.modules["langchain_core.tools"] = tools
+
+    if "langchain_classic.chains" not in sys.modules:
+        chains = ModuleType("langchain_classic.chains")
+        chains.ConversationChain = MagicMock
+        sys.modules["langchain_classic.chains"] = chains
+
+    if "langchain_classic.memory" not in sys.modules:
+        memory = ModuleType("langchain_classic.memory")
+        memory.ConversationBufferMemory = MagicMock
+        sys.modules["langchain_classic.memory"] = memory
+
+    if "langchain_classic" not in sys.modules:
+        classic = ModuleType("langchain_classic")
+        classic.chains = sys.modules["langchain_classic.chains"]
+        classic.memory = sys.modules["langchain_classic.memory"]
+        sys.modules["langchain_classic"] = classic
 
     if "langgraph.prebuilt" not in sys.modules:
         prebuilt = ModuleType("langgraph.prebuilt")
