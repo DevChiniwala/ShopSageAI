@@ -1,10 +1,7 @@
 """Smoke tests that critical application modules import successfully."""
 
-import pytest
-
 
 def test_app_imports():
-    pytest.importorskip("langchain_google_genai")
     from app import app
 
     assert app.title == "ShopSage AI"
