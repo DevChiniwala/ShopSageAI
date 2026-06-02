@@ -343,8 +343,8 @@ resource "aws_ecs_task_definition" "app" {
         { name = "ENVIRONMENT", value = var.environment },
         {
           name  = "DATABASE_URL"
-          value = "postgresql+asyncpg://${var.db_username}:${var.db_password}@${aws_db_instance.shopsage_db.address}:5432/${aws_db_instance.shopsage_db.db_name}"
-        },
+          value = "postgresql+asyncpg://${urlencode(var.db_username)}:${urlencode(var.db_password)}@${aws_db_instance.shopsage_db.address}:5432/${aws_db_instance.shopsage_db.db_name}"
+        }
         { name = "REDIS_URL", value = "redis://${aws_elasticache_cluster.shopsage_redis.cache_nodes[0].address}:6379/0" }
       ]
       secrets = [
