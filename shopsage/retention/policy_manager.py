@@ -16,6 +16,8 @@ from dataclasses import dataclass, field, asdict
 from typing import Optional
 from enum import Enum
 
+from shopsage.config import settings
+
 logger = logging.getLogger("shopsage.retention")
 
 
@@ -86,7 +88,7 @@ class RetentionPolicyManager:
     cleanup scheduling, compliance reports, and audit trails.
     """
 
-    def __init__(self, db_path: str = "shopsage.db"):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self._db_path = db_path
         self._lock = threading.Lock()
         self._init_db()

@@ -19,6 +19,8 @@ from datetime import datetime, timezone, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from threading import Lock
 
+from shopsage.config import settings
+
 logger = logging.getLogger("shopsage.analytics.rate_limit_analytics")
 
 
@@ -30,7 +32,7 @@ class RateLimitAnalytics:
     reporting for admin dashboards and alerting.
     """
 
-    def __init__(self, db_path: str = "shopsage.db") -> None:
+    def __init__(self, db_path: str = settings.DB_PATH) -> None:
         self._db_path = db_path
         self._lock = Lock()
         self._init_db()

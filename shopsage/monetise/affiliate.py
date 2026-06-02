@@ -22,6 +22,11 @@ AFFILIATE_TAGS = {
         "value": "shopsageai-21",
         "program": "Amazon Associates India",
     },
+    "amazon.com": {
+        "param": "tag",
+        "value": "shopsageai-20",
+        "program": "Amazon Associates",
+    },
     "flipkart.com": {
         "param": "affid",
         "value": "shopsageai",
@@ -36,6 +41,14 @@ AFFILIATE_TAGS = {
 
 # Revenue tracking (in-memory for now, move to DB for production)
 _click_log: list[dict] = []
+
+# Trailing punctuation often captured by \S+ URL matchers in prose
+_TRAILING_URL_PUNCT = re.compile(r'[.,;:!?)>\]]+$')
+
+
+def _normalize_matched_url(url: str) -> str:
+    """Strip trailing punctuation accidentally included in URL matches."""
+    return _TRAILING_URL_PUNCT.sub("", url)
 
 
 # ─── Core Functions ────────────────────────────────────────────────────
@@ -111,7 +124,10 @@ def inject_all_links(text: str) -> str:
     url_pattern = re.compile(r'(https?://\S+)')
 
     def _replace(match):
-        return inject_affiliate_link(match.group(1))
+        raw = match.group(1)
+        cleaned = _normalize_matched_url(raw)
+        suffix = raw[len(cleaned):]
+        return inject_affiliate_link(cleaned) + suffix
 
     return url_pattern.sub(_replace, text)
 
@@ -143,8 +159,8 @@ def get_click_stats() -> dict:
     Returns:
         Dict with total clicks and per-store breakdown.
     """
-    stats = {"total": len(_click_log), "by_store": {}}
+    by_store: dict[str, int] = {}
     for entry in _click_log:
         store = entry["store"]
-        stats["by_store"][store] = stats["by_store"].get(store, 0) + 1
-    return stats
+        by_store[store] = by_store.get(store, 0) + 1
+    return {"total": len(_click_log), "by_store": by_store}

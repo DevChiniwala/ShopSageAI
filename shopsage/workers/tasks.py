@@ -57,15 +57,16 @@ def dispatch_webhook_task(self, event_type: str, payload: dict, tenant_id: str):
     logger.info(f"[Task:webhook] Dispatching '{event_type}' for tenant {tenant_id}")
 
     try:
-        from shopsage.webhooks.webhook_store import WebhookStore
+        import asyncio
+
         from shopsage.webhooks.dispatcher import WebhookDispatcher
-        from shopsage.config import DB_PATH
+        from shopsage.config import settings
 
-        store = WebhookStore(db_path=DB_PATH)
-        dispatcher = WebhookDispatcher(db_path=DB_PATH)
-
-        dispatcher.dispatch(event_type, payload, tenant_id)
-        return True
+        dispatcher = WebhookDispatcher(db_path=settings.DB_PATH)
+        delivered = asyncio.run(
+            dispatcher.dispatch(event_type, payload, tenant_id)
+        )
+        return delivered
     except Exception as exc:
         logger.warning(f"[Task:webhook] Delivery failed, scheduling retry: {exc}")
         raise self.retry(exc=exc, countdown=2 ** self.request.retries)

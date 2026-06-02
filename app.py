@@ -81,9 +81,8 @@ from shopsage.cache.distributed_cache import _get_shared_client
 # Security Middlewares
 app.add_middleware(RateLimitHeadersMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(
-    TrustedHostMiddleware, allowed_hosts=["*", "localhost", "127.0.0.1"]
-)
+if settings.ENVIRONMENT != "development":
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.ALLOWED_HOSTS)
 app.add_middleware(
     AbusiveIPBlockerMiddleware,
     redis_client=_get_shared_client(),

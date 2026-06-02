@@ -106,6 +106,7 @@ async def chat_endpoint(
         tenant_id=tenant["id"],
         session_id=request.session_id,
         event_type="chat",
+        event_data=event_data,
     )
 
     limiter: RateLimiter = get_rate_limiter()

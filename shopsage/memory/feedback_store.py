@@ -4,10 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
-try:
-    from shopsage.config import DB_PATH
-except ImportError:
-    DB_PATH = "shopsage.db"
+from shopsage.config import settings
 
 logger = logging.getLogger("shopsage.memory.feedback_store")
 
@@ -15,7 +12,7 @@ class FeedbackStore:
     """
     SQLite-backed store for user feedback on AI responses.
     """
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self.db_path = db_path
         self._init_db()
 

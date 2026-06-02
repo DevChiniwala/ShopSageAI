@@ -78,7 +78,7 @@ def export_to_markdown(messages: List[Message]) -> str:
         f"**Messages:** {len(messages)}  ",
         f"**Period:** {messages[0].timestamp} → {messages[-1].timestamp}",
         f"",
-        f"---",
+        "---",
         f"",
     ]
 
@@ -96,7 +96,7 @@ def export_to_markdown(messages: List[Message]) -> str:
         lines.append(f"")
         lines.append(f"<small>📅 {msg.timestamp} · Route: `{msg.route}`</small>")
         lines.append(f"")
-        lines.append(f"---")
+        lines.append("---")
         lines.append(f"")
 
     return "\n".join(lines)

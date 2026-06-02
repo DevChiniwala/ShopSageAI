@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     HOST: str = Field(default="0.0.0.0")
     PORT: int = Field(default=8000)
     CORS_ORIGINS: List[str] = Field(default=["http://localhost:3000", "http://localhost:8000"])
+    ALLOWED_HOSTS: List[str] = Field(
+        default=["localhost", "127.0.0.1"],
+        description="Trusted Host header values (comma-separated via ALLOWED_HOSTS env)",
+    )
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

@@ -15,6 +15,8 @@ from dataclasses import dataclass, field, asdict
 from typing import Optional
 from enum import Enum
 
+from shopsage.config import settings
+
 logger = logging.getLogger("shopsage.onboarding")
 
 
@@ -133,7 +135,7 @@ class OnboardingManager:
     provisioning, API key issuance, quota setup, and checklist tracking.
     """
 
-    def __init__(self, db_path: str = "shopsage.db"):
+    def __init__(self, db_path: str = settings.DB_PATH):
         self._db_path = db_path
         self._lock = threading.Lock()
         self._init_db()
@@ -296,7 +298,7 @@ class OnboardingManager:
 
     # ── Provisioning Pipeline ──────────────────────────────────────────
 
-    def activate_tenant(self, tenant_id: str) -> TenantRegistration:
+    def activate_tenant(self, tenant_id: str) -> Optional[TenantRegistration]:
         """
         Activate a tenant, moving them from PENDING → ACTIVE.
         Also marks the verify_email checklist step as complete.
@@ -356,7 +358,7 @@ class OnboardingManager:
         logger.info("[Onboarding] Suspended tenant %s: %s", tenant_id, reason)
         return cur.rowcount > 0
 
-    def change_plan(self, tenant_id: str, new_plan: str) -> TenantRegistration:
+    def change_plan(self, tenant_id: str, new_plan: str) -> Optional[TenantRegistration]:
         """Change a tenant's subscription plan."""
         now = time.time()
         with self._lock, self._conn() as conn:
