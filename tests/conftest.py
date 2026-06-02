@@ -77,15 +77,31 @@ def _install_langchain_mocks() -> None:
         classic.memory = sys.modules["langchain_classic.memory"]
         sys.modules["langchain_classic"] = classic
 
+    # Ensure parent packages exist for dotted modules.
+    langgraph_pkg = sys.modules.get("langgraph")
+    if langgraph_pkg is None:
+        langgraph_pkg = ModuleType("langgraph")
+        langgraph_pkg.__path__ = []
+        sys.modules["langgraph"] = langgraph_pkg
+
+    checkpoint_pkg = sys.modules.get("langgraph.checkpoint")
+    if checkpoint_pkg is None:
+        checkpoint_pkg = ModuleType("langgraph.checkpoint")
+        checkpoint_pkg.__path__ = []
+        sys.modules["langgraph.checkpoint"] = checkpoint_pkg
+        setattr(langgraph_pkg, "checkpoint", checkpoint_pkg)
+
     if "langgraph.prebuilt" not in sys.modules:
         prebuilt = ModuleType("langgraph.prebuilt")
         prebuilt.create_react_agent = MagicMock(return_value=MagicMock())
         sys.modules["langgraph.prebuilt"] = prebuilt
+        setattr(langgraph_pkg, "prebuilt", prebuilt)
 
     if "langgraph.checkpoint.memory" not in sys.modules:
         memory = ModuleType("langgraph.checkpoint.memory")
         memory.MemorySaver = MagicMock
         sys.modules["langgraph.checkpoint.memory"] = memory
+        setattr(checkpoint_pkg, "memory", memory)
 
 
 _install_google_genai_mock()
