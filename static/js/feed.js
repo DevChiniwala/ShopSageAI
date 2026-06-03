@@ -156,6 +156,23 @@ const FeedApp = (() => {
             });
 
             feedContainer.appendChild(card);
+            
+            // Add GSAP and VanillaTilt
+            if (typeof gsap !== 'undefined') {
+                gsap.fromTo(card, 
+                    { opacity: 0, y: 50, scale: 0.95 }, 
+                    { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "power3.out", delay: i * 0.1 }
+                );
+            }
+            if (typeof VanillaTilt !== 'undefined') {
+                VanillaTilt.init(card, {
+                    max: 8,
+                    speed: 400,
+                    glare: true,
+                    "max-glare": 0.1,
+                    scale: 1.02
+                });
+            }
         });
     }
 
