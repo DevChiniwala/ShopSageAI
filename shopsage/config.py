@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     PORT: int = Field(default=8000)
     CORS_ORIGINS: List[str] = Field(default=["http://localhost:3000", "http://localhost:8000"])
     ALLOWED_HOSTS: List[str] = Field(
-        default=["localhost", "127.0.0.1"],
+        default=["localhost", "127.0.0.1", "testserver"],
         description="Trusted Host header values (comma-separated via ALLOWED_HOSTS env)",
     )
 
