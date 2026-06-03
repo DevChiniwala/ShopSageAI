@@ -1,0 +1,1 @@
+# ShopSage Collections Module

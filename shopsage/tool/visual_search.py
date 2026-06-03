@@ -3,10 +3,11 @@ Visual Search Tool — Image-based product discovery for ShopSage AI.
 
 Uses Gemini 2.0 Flash's multimodal capability to analyze uploaded
 product images, extract visual attributes (color, type, brand, style),
-and search the inventory for matching products.
+and search across live stores for matching products.
 """
 
 import base64
+import json
 import logging
 from google import genai
 from shopsage.config import settings
@@ -21,17 +22,29 @@ _loader = ProductDataLoader()
 
 VISION_PROMPT = """Analyze this product image for a shopping search engine.
 
-Extract the following attributes in a concise, comma-separated format:
-- Product type (e.g., t-shirt, jacket, shoes, dress, polo)
-- Color(s)
-- Brand (if logo or text is visible, otherwise say "unknown")
-- Material (if identifiable, e.g., cotton, leather, denim)
-- Style (casual, formal, sporty, streetwear, ethnic)
-- Gender target (men, women, unisex)
-- Any distinctive features (print pattern, collar type, fit)
+Extract the following attributes and return them as JSON:
+{
+  "product_type": "e.g., t-shirt, jacket, shoes, dress, handbag",
+  "color": "primary color(s)",
+  "brand": "brand name if visible, otherwise 'Unknown'",
+  "material": "if identifiable, e.g., cotton, leather, denim",
+  "style": "casual, formal, sporty, streetwear, ethnic, minimalist",
+  "gender": "men, women, unisex",
+  "features": "distinctive features like print pattern, collar type, fit",
+  "search_query": "a natural language search query to find this product online",
+  "estimated_price_range": "e.g., $20-$50 or ₹1,000-₹3,000"
+}
 
-Output ONLY the comma-separated description, nothing else.
-Example: "red cotton polo shirt, Nike, casual, men, slim fit, pique knit"
+Output ONLY the JSON, no markdown fences, no explanation.
+"""
+
+STYLE_MATCH_PROMPT = """Based on this product image, suggest 3 complementary items
+that would create a complete outfit or look. For each item, provide:
+- item_type (e.g., "slim fit chinos")
+- color suggestion
+- style tip (why it pairs well)
+
+Return as JSON array. Output ONLY the JSON, no markdown fences.
 """
 
 
@@ -69,6 +82,59 @@ def analyze_product_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> 
         return ""
 
 
+def analyze_product_image_structured(
+    image_bytes: bytes, mime_type: str = "image/jpeg"
+) -> dict:
+    """
+    Analyze a product image and return structured attributes.
+
+    Returns:
+        Dict with product_type, color, brand, style, search_query, etc.
+    """
+    raw = analyze_product_image(image_bytes, mime_type)
+    if not raw:
+        return {}
+
+    try:
+        # Try parsing as JSON
+        cleaned = raw.strip().removeprefix("```json").removesuffix("```").strip()
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        # Fallback: return as comma-separated description
+        return {
+            "product_type": "product",
+            "search_query": raw,
+            "raw_description": raw,
+        }
+
+
+def get_style_suggestions(
+    image_bytes: bytes, mime_type: str = "image/jpeg"
+) -> list:
+    """
+    Given a product image, suggest complementary items to complete the look.
+
+    Returns:
+        List of dicts with item_type, color, and style_tip.
+    """
+    try:
+        b64_data = base64.b64encode(image_bytes).decode("utf-8")
+
+        response = _client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[
+                {"text": STYLE_MATCH_PROMPT},
+                {"inline_data": {"mime_type": mime_type, "data": b64_data}},
+            ],
+        )
+
+        raw = response.text.strip().removeprefix("```json").removesuffix("```").strip()
+        return json.loads(raw)
+    except Exception as e:
+        logger.error(f"[Visual] Style suggestion failed: {e}")
+        return []
+
+
 def search_by_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict:
     """
     Full visual search pipeline: analyze image → search products.
@@ -78,32 +144,57 @@ def search_by_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict:
         mime_type: MIME type of the image.
 
     Returns:
-        Dict with 'description' (what the AI saw) and 'results' (matching products).
+        Dict with 'analysis' (structured attributes), 'description',
+        'results' (matching products), and 'style_suggestions'.
     """
-    description = analyze_product_image(image_bytes, mime_type)
+    # Step 1: Analyze the image
+    analysis = analyze_product_image_structured(image_bytes, mime_type)
 
-    if not description:
+    if not analysis:
         return {
+            "analysis": {},
             "description": "",
             "results": "I couldn't analyze this image. Please try a clearer product photo.",
+            "style_suggestions": [],
         }
 
-    # Search using extracted description terms
-    # Split description and search with key terms
-    search_terms = [term.strip() for term in description.split(",")]
+    # Step 2: Build search query
+    search_query = analysis.get("search_query", "")
+    if not search_query:
+        # Build from parts
+        parts = [
+            analysis.get("color", ""),
+            analysis.get("material", ""),
+            analysis.get("product_type", ""),
+            analysis.get("brand", ""),
+        ]
+        search_query = " ".join(p for p in parts if p and p.lower() != "unknown")
 
-    # Try full description first
+    description = search_query
+    logger.info(f"[Visual] Searching for: {description}")
+
+    # Step 3: Search with extracted description
     results = _loader.search_products(description)
 
-    # If no results, try individual terms
-    if "No products found" in results and len(search_terms) > 1:
-        for term in search_terms[:3]:  # try top 3 terms
-            if len(term) > 2:
+    # If no results, try individual attribute terms
+    if "No products found" in results:
+        fallback_terms = [
+            analysis.get("product_type", ""),
+            analysis.get("color", ""),
+            analysis.get("style", ""),
+        ]
+        for term in fallback_terms:
+            if term and len(term) > 2:
                 results = _loader.search_products(term)
                 if "No products found" not in results:
                     break
 
+    # Step 4: Get style suggestions (async-friendly in future)
+    style_suggestions = get_style_suggestions(image_bytes, mime_type)
+
     return {
+        "analysis": analysis,
         "description": description,
         "results": results,
+        "style_suggestions": style_suggestions,
     }

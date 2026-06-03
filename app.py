@@ -273,6 +273,112 @@ async def api_feed(page: int = 0, filter: str = "foryou"):
     return {"products": batch, "page": page, "has_more": start + per_page < len(shuffled)}
 
 
+# ─── Collections API ───────────────────────────────────────────────────
+
+from shopsage.collections.store import CollectionStore
+_collection_store = CollectionStore(db_path=settings.DB_PATH)
+
+
+@app.post("/api/collections")
+async def create_collection(request: Request):
+    """Create a new collection/wishlist."""
+    body = await request.json()
+    col = _collection_store.create_collection(
+        name=body.get("name", "My Collection"),
+        description=body.get("description", ""),
+        session_id=body.get("session_id", ""),
+    )
+    return col.to_dict()
+
+
+@app.get("/api/collections")
+async def list_collections(session_id: str = ""):
+    """List all collections."""
+    return {"collections": _collection_store.list_collections(session_id)}
+
+
+@app.get("/api/collections/{collection_id}")
+async def get_collection(collection_id: str):
+    """Get a collection with all items."""
+    col = _collection_store.get_collection(collection_id)
+    if not col:
+        return JSONResponse(content={"error": "Collection not found"}, status_code=404)
+    return col
+
+
+@app.post("/api/collections/{collection_id}/items")
+async def add_to_collection(collection_id: str, request: Request):
+    """Add a product to a collection."""
+    body = await request.json()
+    item_id = _collection_store.add_item(
+        collection_id=collection_id,
+        title=body.get("title", ""),
+        price=body.get("price", ""),
+        store=body.get("store", ""),
+        image_url=body.get("image_url", ""),
+        affiliate_url=body.get("affiliate_url", ""),
+    )
+    return {"item_id": item_id, "status": "added"}
+
+
+@app.delete("/api/collections/{collection_id}/items/{item_id}")
+async def remove_from_collection(collection_id: str, item_id: str):
+    """Remove a product from a collection."""
+    success = _collection_store.remove_item(collection_id, item_id)
+    if not success:
+        return JSONResponse(content={"error": "Item not found"}, status_code=404)
+    return {"status": "removed"}
+
+
+@app.delete("/api/collections/{collection_id}")
+async def delete_collection(collection_id: str):
+    """Delete a collection."""
+    success = _collection_store.delete_collection(collection_id)
+    if not success:
+        return JSONResponse(content={"error": "Collection not found"}, status_code=404)
+    return {"status": "deleted"}
+
+
+# ─── Style Advisor API ─────────────────────────────────────────────────
+
+from shopsage.tool.style_advisor import get_outfit_suggestions
+
+
+@app.post("/api/style/outfits")
+async def style_outfits(request: Request):
+    """Get AI-generated outfit suggestions."""
+    body = await request.json()
+    result = get_outfit_suggestions(
+        request=body.get("request", ""),
+        budget=body.get("budget", "₹5,000-₹10,000"),
+        style=body.get("style", "casual"),
+        gender=body.get("gender", "unisex"),
+        occasion=body.get("occasion", "everyday"),
+    )
+    return result
+
+
+# ─── Product Comparison API ────────────────────────────────────────────
+
+from shopsage.tool.compare import compare_products, quick_compare
+
+
+@app.post("/api/compare")
+async def compare_products_api(request: Request):
+    """Compare 2-4 products side by side."""
+    body = await request.json()
+    products = body.get("products", [])
+    result = compare_products(products)
+    return result
+
+
+@app.get("/api/compare/quick")
+async def quick_compare_api(a: str, b: str):
+    """Quick natural language comparison of two products."""
+    result = quick_compare(a, b)
+    return {"comparison": result}
+
+
 # ─── Request / Response Models ─────────────────────────────────────────
 
 
