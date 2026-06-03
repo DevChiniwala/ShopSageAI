@@ -235,6 +235,44 @@ async def cache_stats():
     }
 
 
+# ─── Discovery Feed ────────────────────────────────────────────────────
+
+
+@app.get("/feed")
+async def feed_page(request: Request):
+    """Serve the For You discovery feed page."""
+    return templates.TemplateResponse("feed.html", {"request": request})
+
+
+@app.get("/api/feed")
+async def api_feed(page: int = 0, filter: str = "foryou"):
+    """Return personalized product recommendations for the feed."""
+    import random
+
+    sample_products = [
+        {"id": "fp1", "title": "Oversized Linen Blazer", "description": "Relaxed fit, breathable linen blend — perfect for summer layering", "price": "\u20b93,499", "originalPrice": "\u20b95,999", "discount": "42% OFF", "store": "Myntra", "image": "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&h=1200&fit=crop", "affiliate": "#"},
+        {"id": "fp2", "title": "Vintage Washed Denim Jacket", "description": "Stone-washed finish with authentic distressed detailing", "price": "\u20b92,799", "originalPrice": "\u20b94,499", "discount": "38% OFF", "store": "Amazon", "image": "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=800&h=1200&fit=crop", "affiliate": "#"},
+        {"id": "fp3", "title": "Minimalist Leather Crossbody", "description": "Genuine leather, adjustable strap, magnetic closure", "price": "\u20b91,899", "originalPrice": "\u20b93,299", "discount": "42% OFF", "store": "Flipkart", "image": "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&h=1200&fit=crop", "affiliate": "#"},
+        {"id": "fp4", "title": "Cotton Crew Neck Tee", "description": "Premium 180GSM cotton, pre-shrunk, relaxed fit", "price": "\u20b9899", "originalPrice": "\u20b91,499", "discount": "40% OFF", "store": "Myntra", "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=1200&fit=crop", "affiliate": "#"},
+        {"id": "fp5", "title": "Retro Running Sneakers", "description": "Suede and mesh upper, EVA cushioned sole, vintage colorway", "price": "\u20b94,299", "originalPrice": "\u20b96,999", "discount": "39% OFF", "store": "Amazon", "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=1200&fit=crop", "affiliate": "#"},
+        {"id": "fp6", "title": "Tailored Chino Pants", "description": "Stretch twill, slim taper fit, ankle length", "price": "\u20b91,699", "originalPrice": "\u20b92,999", "discount": "43% OFF", "store": "Flipkart", "image": "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800&h=1200&fit=crop", "affiliate": "#"},
+        {"id": "fp7", "title": "Polarized Aviator Sunglasses", "description": "UV400 protection, metal frame, gradient lenses", "price": "\u20b91,299", "originalPrice": "\u20b92,499", "discount": "48% OFF", "store": "Amazon", "image": "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=800&h=1200&fit=crop", "affiliate": "#"},
+        {"id": "fp8", "title": "Silk Blend Wrap Dress", "description": "Flowing silhouette, adjustable waist tie, midi length", "price": "\u20b93,999", "originalPrice": "\u20b96,499", "discount": "38% OFF", "store": "Myntra", "image": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&h=1200&fit=crop", "affiliate": "#"},
+        {"id": "fp9", "title": "Canvas Weekender Bag", "description": "Waxed canvas, leather handles, padded laptop sleeve", "price": "\u20b92,499", "originalPrice": "\u20b94,199", "discount": "40% OFF", "store": "Amazon", "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&h=1200&fit=crop", "affiliate": "#"},
+        {"id": "fp10", "title": "Cashmere Blend Sweater", "description": "Ultra-soft wool-cashmere blend, ribbed cuffs, relaxed fit", "price": "\u20b93,199", "originalPrice": "\u20b95,499", "discount": "42% OFF", "store": "Myntra", "image": "https://images.unsplash.com/photo-1434389677669-e08b4cda3a46?w=800&h=1200&fit=crop", "affiliate": "#"},
+        {"id": "fp11", "title": "High-Waist Wide Leg Jeans", "description": "100% cotton denim, non-stretch, vintage wash", "price": "\u20b91,999", "originalPrice": "\u20b93,499", "discount": "43% OFF", "store": "Flipkart", "image": "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800&h=1200&fit=crop", "affiliate": "#"},
+        {"id": "fp12", "title": "Chunky Platform Sneakers", "description": "Leather upper, extra-thick sole, street-ready design", "price": "\u20b93,799", "originalPrice": "\u20b95,999", "discount": "37% OFF", "store": "Amazon", "image": "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=800&h=1200&fit=crop", "affiliate": "#"},
+    ]
+
+    per_page = 3
+    start = page * per_page
+    shuffled = sample_products.copy()
+    random.shuffle(shuffled)
+    batch = shuffled[start:start + per_page] if start < len(shuffled) else []
+
+    return {"products": batch, "page": page, "has_more": start + per_page < len(shuffled)}
+
+
 # ─── Request / Response Models ─────────────────────────────────────────
 
 
