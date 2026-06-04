@@ -54,6 +54,7 @@ body {
 
 /* ─── Ambient Background ────────────────────────────────────── */
 .ambient-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.ambient-bg spline-viewer { width: 100%; height: 100%; pointer-events: none; }
 .ambient-orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.4; will-change: transform; }
 .orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(124, 58, 237, 0.3), transparent 70%); top: -200px; left: 50%; transform: translateX(-50%); animation: orbFloat1 20s ease-in-out infinite; }
 .orb-2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(139, 92, 246, 0.2), transparent 70%); bottom: -100px; right: -100px; animation: orbFloat2 25s ease-in-out infinite; }
@@ -228,6 +229,20 @@ body {
     .chat-messages { padding: 16px 14px; }
     .message { max-width: 90%; }
     .chat-input-area { padding: 10px 14px 16px; }
+}
+
+/* ─── Bottom Navigation ─────────────────────────────────────── */
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-around; height: 70px; background: rgba(13, 13, 26, 0.85); backdrop-filter: blur(24px); border-top: 1px solid rgba(255, 255, 255, 0.06); padding-bottom: env(safe-area-inset-bottom, 0); }
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 8px 16px; transition: all 0.3s var(--ease-out); position: relative; }
+.nav-item.active { color: var(--purple-400); }
+.nav-item.active::before { content: ''; position: absolute; top: -1px; left: 50%; transform: translateX(-50%); width: 24px; height: 3px; border-radius: 0 0 4px 4px; background: var(--gradient-send); }
+.nav-item svg { width: 22px; height: 22px; transition: transform 0.2s var(--ease-spring); }
+.nav-item:active svg { transform: scale(0.85); }
+.nav-item .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.3px; }
+
+@media (min-width: 768px) {
+    .bottom-nav { max-width: 860px; left: 50%; transform: translateX(-50%); border-radius: 20px 20px 0 0; border-left: 1px solid rgba(255, 255, 255, 0.06); border-right: 1px solid rgba(255, 255, 255, 0.06); }
+    .chat-screen { padding-bottom: 70px; } /* Ensure chat doesn't hide behind nav */
 }
 
 /* ─── Reduced Motion ────────────────────────────────────────── */

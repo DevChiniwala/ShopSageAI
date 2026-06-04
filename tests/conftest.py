@@ -76,7 +76,6 @@ def _install_langchain_mocks() -> None:
         classic.chains = sys.modules["langchain_classic.chains"]
         classic.memory = sys.modules["langchain_classic.memory"]
         sys.modules["langchain_classic"] = classic
-
     # Ensure parent packages exist for dotted modules.
     langgraph_pkg = sys.modules.get("langgraph")
     if langgraph_pkg is None:

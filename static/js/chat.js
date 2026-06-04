@@ -262,6 +262,9 @@ function addUserMsg(text) {
         </div>`;
     messagesEl.appendChild(el);
     scrollBottom();
+    if (typeof gsap !== 'undefined') {
+        gsap.fromTo(el, { opacity: 0, y: 20, scale: 0.95 }, { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "back.out(1.5)" });
+    }
 }
 
 function addUserImageMsg(dataUrl, text) {
@@ -280,6 +283,9 @@ function addUserImageMsg(dataUrl, text) {
         </div>`;
     messagesEl.appendChild(el);
     scrollBottom();
+    if (typeof gsap !== 'undefined') {
+        gsap.fromTo(el, { opacity: 0, y: 20, scale: 0.95 }, { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "back.out(1.5)" });
+    }
 }
 
 function addBotMsg(text, route) {
@@ -310,6 +316,15 @@ function addBotMsg(text, route) {
         </div>`;
     messagesEl.appendChild(el);
     scrollBottom();
+    if (typeof gsap !== 'undefined') {
+        gsap.fromTo(el, { opacity: 0, x: -20, scale: 0.95 }, { opacity: 1, x: 0, scale: 1, duration: 0.5, ease: "back.out(1.2)" });
+    }
+    if (typeof VanillaTilt !== 'undefined') {
+        const priceCards = el.querySelectorAll('.price-card');
+        if (priceCards.length > 0) {
+            VanillaTilt.init(priceCards, { max: 10, speed: 400, glare: true, "max-glare": 0.1, scale: 1.02 });
+        }
+    }
 }
 
 // ─── Typing Indicator ───────────────────────────────────────────
@@ -322,6 +337,9 @@ function showTyping() {
         <div class="typing-dots"><span></span><span></span><span></span></div>`;
     messagesEl.appendChild(el);
     scrollBottom();
+    if (typeof gsap !== 'undefined') {
+        gsap.fromTo(el, { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" });
+    }
     return el;
 }
 
@@ -349,3 +367,21 @@ function formatMd(text) {
         .replace(/^(\d+)\. (.*$)/gm, '&nbsp;&nbsp;$1.&nbsp; $2')
         .replace(/\n/g, '<br>');
 }
+
+// ─── Premium UI Animations (GSAP) ───────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    // Check if GSAP is loaded
+    if (typeof gsap === 'undefined') return;
+
+    // Welcome Screen Stagger Animation
+    if (!welcomeScreen.classList.contains('hidden')) {
+        gsap.fromTo('.sphere-container',
+            { scale: 0, opacity: 0, rotationY: -90 },
+            { scale: 1, opacity: 1, rotationY: 0, duration: 1.2, ease: "elastic.out(1, 0.7)" }
+        );
+        gsap.fromTo(['.welcome-subtitle', '.welcome-title', '.suggestion-chips', '.welcome-input-wrapper', '.welcome-footer'],
+            { y: 40, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.8, stagger: 0.1, ease: "back.out(1.7)", delay: 0.2 }
+        );
+    }
+});
