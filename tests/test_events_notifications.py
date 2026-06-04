@@ -4,6 +4,20 @@ Tests for EventBus, NotificationCenter, and Event Handlers.
 
 import pytest
 import asyncio
+
+import threading
+def _run_isolated(coro):
+    loop = asyncio.new_event_loop()
+    res = []
+    def target():
+        asyncio.set_event_loop(loop)
+        res.append(loop.run_until_complete(coro))
+    t = threading.Thread(target=target)
+    t.start()
+    t.join()
+    loop.close()
+    return res[0]
+
 from shopsage.events.event_bus import EventBus, Event
 from shopsage.notifications.notification_center import NotificationCenter
 
@@ -25,7 +39,7 @@ def test_publish_and_handle(bus):
 
     bus.subscribe("test.event", handler)
 
-    asyncio.run(bus.publish(Event(type="test.event", data={"key": "value"})))
+    _run_isolated(bus.publish(Event(type="test.event", data={"key": "value"})))
 
     assert len(received) == 1
     assert received[0]["key"] == "value"
@@ -44,7 +58,7 @@ def test_multiple_handlers(bus):
     bus.subscribe("multi", handler_a)
     bus.subscribe("multi", handler_b)
 
-    asyncio.run(bus.publish(Event(type="multi", data={})))
+    _run_isolated(bus.publish(Event(type="multi", data={})))
 
     assert "a" in results
     assert "b" in results
@@ -59,8 +73,8 @@ def test_wildcard_handler(bus):
 
     bus.subscribe("*", wildcard)
 
-    asyncio.run(bus.publish(Event(type="event.one", data={})))
-    asyncio.run(bus.publish(Event(type="event.two", data={})))
+    _run_isolated(bus.publish(Event(type="event.one", data={})))
+    _run_isolated(bus.publish(Event(type="event.two", data={})))
 
     assert len(received) == 2
     assert "event.one" in received
@@ -80,7 +94,7 @@ def test_error_isolation(bus):
     bus.subscribe("error.test", bad_handler)
     bus.subscribe("error.test", good_handler)
 
-    asyncio.run(bus.publish(Event(type="error.test", data={})))
+    _run_isolated(bus.publish(Event(type="error.test", data={})))
 
     assert results == ["ok"]
     assert bus.get_stats()["errors"] == 1
@@ -96,7 +110,7 @@ def test_unsubscribe(bus):
     bus.subscribe("unsub.test", handler)
     assert bus.unsubscribe("unsub.test", handler) is True
 
-    asyncio.run(bus.publish(Event(type="unsub.test", data={})))
+    _run_isolated(bus.publish(Event(type="unsub.test", data={})))
     assert len(called) == 0
 
 
@@ -106,7 +120,7 @@ def test_event_history(bus):
         pass
 
     bus.subscribe("history.test", noop)
-    asyncio.run(bus.publish(Event(type="history.test", data={"a": 1})))
+    _run_isolated(bus.publish(Event(type="history.test", data={"a": 1})))
 
     history = bus.get_history(limit=10)
     assert len(history) == 1
@@ -119,8 +133,8 @@ def test_stats_tracking(bus):
         pass
 
     bus.subscribe("stats.test", noop)
-    asyncio.run(bus.publish(Event(type="stats.test", data={})))
-    asyncio.run(bus.publish(Event(type="stats.test", data={})))
+    _run_isolated(bus.publish(Event(type="stats.test", data={})))
+    _run_isolated(bus.publish(Event(type="stats.test", data={})))
 
     stats = bus.get_stats()
     assert stats["total_events"] == 2
