@@ -4,6 +4,20 @@ Tests for EventBus, NotificationCenter, and Event Handlers.
 
 import pytest
 import asyncio
+
+import threading
+def _run_isolated(coro):
+    loop = asyncio.new_event_loop()
+    res = []
+    def target():
+        asyncio.set_event_loop(loop)
+        res.append(loop.run_until_complete(coro))
+    t = threading.Thread(target=target)
+    t.start()
+    t.join()
+    loop.close()
+    return res[0]
+
 from shopsage.events.event_bus import EventBus, Event
 from shopsage.notifications.notification_center import NotificationCenter
 
@@ -16,8 +30,7 @@ def bus():
     return EventBus()
 
 
-@pytest.mark.asyncio
-async def test_publish_and_handle(bus):
+def test_publish_and_handle(bus):
     """Test basic publish-subscribe."""
     received = []
 
@@ -26,14 +39,13 @@ async def test_publish_and_handle(bus):
 
     bus.subscribe("test.event", handler)
 
-    await bus.publish(Event(type="test.event", data={"key": "value"}))
+    _run_isolated(bus.publish(Event(type="test.event", data={"key": "value"})))
 
     assert len(received) == 1
     assert received[0]["key"] == "value"
 
 
-@pytest.mark.asyncio
-async def test_multiple_handlers(bus):
+def test_multiple_handlers(bus):
     """Test multiple handlers for same event."""
     results = []
 
@@ -46,14 +58,13 @@ async def test_multiple_handlers(bus):
     bus.subscribe("multi", handler_a)
     bus.subscribe("multi", handler_b)
 
-    await bus.publish(Event(type="multi", data={}))
+    _run_isolated(bus.publish(Event(type="multi", data={})))
 
     assert "a" in results
     assert "b" in results
 
 
-@pytest.mark.asyncio
-async def test_wildcard_handler(bus):
+def test_wildcard_handler(bus):
     """Wildcard handlers should receive all events."""
     received = []
 
@@ -62,16 +73,15 @@ async def test_wildcard_handler(bus):
 
     bus.subscribe("*", wildcard)
 
-    await bus.publish(Event(type="event.one", data={}))
-    await bus.publish(Event(type="event.two", data={}))
+    _run_isolated(bus.publish(Event(type="event.one", data={})))
+    _run_isolated(bus.publish(Event(type="event.two", data={})))
 
     assert len(received) == 2
     assert "event.one" in received
     assert "event.two" in received
 
 
-@pytest.mark.asyncio
-async def test_error_isolation(bus):
+def test_error_isolation(bus):
     """Errors in one handler should not block others."""
     results = []
 
@@ -84,14 +94,13 @@ async def test_error_isolation(bus):
     bus.subscribe("error.test", bad_handler)
     bus.subscribe("error.test", good_handler)
 
-    await bus.publish(Event(type="error.test", data={}))
+    _run_isolated(bus.publish(Event(type="error.test", data={})))
 
     assert results == ["ok"]
     assert bus.get_stats()["errors"] == 1
 
 
-@pytest.mark.asyncio
-async def test_unsubscribe(bus):
+def test_unsubscribe(bus):
     """Unsubscribe should remove handler."""
     called = []
 
@@ -101,33 +110,31 @@ async def test_unsubscribe(bus):
     bus.subscribe("unsub.test", handler)
     assert bus.unsubscribe("unsub.test", handler) is True
 
-    await bus.publish(Event(type="unsub.test", data={}))
+    _run_isolated(bus.publish(Event(type="unsub.test", data={})))
     assert len(called) == 0
 
 
-@pytest.mark.asyncio
-async def test_event_history(bus):
+def test_event_history(bus):
     """Events should be recorded in history."""
     def noop(event: Event):
         pass
 
     bus.subscribe("history.test", noop)
-    await bus.publish(Event(type="history.test", data={"a": 1}))
+    _run_isolated(bus.publish(Event(type="history.test", data={"a": 1})))
 
     history = bus.get_history(limit=10)
     assert len(history) == 1
     assert history[0]["type"] == "history.test"
 
 
-@pytest.mark.asyncio
-async def test_stats_tracking(bus):
+def test_stats_tracking(bus):
     """Stats should track event counts."""
     def noop(event: Event):
         pass
 
     bus.subscribe("stats.test", noop)
-    await bus.publish(Event(type="stats.test", data={}))
-    await bus.publish(Event(type="stats.test", data={}))
+    _run_isolated(bus.publish(Event(type="stats.test", data={})))
+    _run_isolated(bus.publish(Event(type="stats.test", data={})))
 
     stats = bus.get_stats()
     assert stats["total_events"] == 2
@@ -142,8 +149,7 @@ def notif_center(tmp_path):
     return NotificationCenter(db_path=str(tmp_path / "test_notif.db"))
 
 
-@pytest.mark.asyncio
-async def test_create_notification(notif_center):
+def test_create_notification(notif_center):
     """Should create and retrieve notifications."""
     notif = notif_center.create(
         tenant_id="t1",
@@ -156,8 +162,7 @@ async def test_create_notification(notif_center):
     assert notif["title"] == "Price Drop!"
 
 
-@pytest.mark.asyncio
-async def test_unread_notifications(notif_center):
+def test_unread_notifications(notif_center):
     """Should return only unread notifications."""
     notif_center.create("t1", "alert", "Alert 1", "Message 1")
     notif_center.create("t1", "alert", "Alert 2", "Message 2")
@@ -166,8 +171,7 @@ async def test_unread_notifications(notif_center):
     assert len(unread) == 2
 
 
-@pytest.mark.asyncio
-async def test_mark_read(notif_center):
+def test_mark_read(notif_center):
     """Marking as read should remove from unread list."""
     notif = notif_center.create("t1", "alert", "Test", "Message")
     assert notif_center.mark_read(notif["id"], "t1") is True
@@ -176,8 +180,7 @@ async def test_mark_read(notif_center):
     assert len(unread) == 0
 
 
-@pytest.mark.asyncio
-async def test_mark_all_read(notif_center):
+def test_mark_all_read(notif_center):
     """Should mark all notifications as read."""
     notif_center.create("t1", "alert", "A1", "M1")
     notif_center.create("t1", "alert", "A2", "M2")
@@ -188,8 +191,7 @@ async def test_mark_all_read(notif_center):
     assert notif_center.get_unread_count("t1") == 0
 
 
-@pytest.mark.asyncio
-async def test_unread_count(notif_center):
+def test_unread_count(notif_center):
     """Should count unread notifications."""
     notif_center.create("t1", "a", "T1", "M1")
     notif_center.create("t1", "a", "T2", "M2")
@@ -199,8 +201,7 @@ async def test_unread_count(notif_center):
     assert notif_center.get_unread_count("t2") == 1
 
 
-@pytest.mark.asyncio
-async def test_tenant_isolation(notif_center):
+def test_tenant_isolation(notif_center):
     """Notifications should be tenant-scoped."""
     notif_center.create("t1", "a", "T1", "M1")
     notif_center.create("t2", "a", "T2", "M2")
