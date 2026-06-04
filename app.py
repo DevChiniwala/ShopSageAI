@@ -176,7 +176,7 @@ async def startup_event():
     # _scheduler.start(check_interval=30.0)
     register_builtin_plugins(_plugin_manager)
     register_all_handlers()
-    logger.info("app_started", event="startup", version="2.1.0")
+    logger.info("[App] startup complete", version="2.1.0")
 
 
 @app.on_event("shutdown")

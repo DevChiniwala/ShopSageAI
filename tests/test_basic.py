@@ -16,7 +16,7 @@ def app_instance():
 def client(app_instance):
     from starlette.testclient import TestClient
 
-    with TestClient(app_instance) as test_client:
+    with TestClient(app_instance, base_url="http://127.0.0.1") as test_client:
         yield test_client
 
 
